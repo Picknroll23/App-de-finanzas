@@ -1,0 +1,75 @@
+import React, { useEffect, useState } from "react";
+import { View, Text, TextInput, ScrollView, Pressable, StyleSheet } from "react-native";
+import Ionicons from "@react-native-vector-icons/ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/src/api";
+import { colors, radius, spacing } from "@/src/theme";
+
+const CURRENCIES = ["USD", "EUR", "MXN", "COP", "ARS", "CLP"];
+
+export default function Settings() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["user"], queryFn: api.getUser });
+
+  const [name, setName] = useState("");
+  const [currency, setCurrency] = useState("USD");
+
+  useEffect(() => {
+    if (q.data) { setName(q.data.name || ""); setCurrency(q.data.currency || "USD"); }
+  }, [q.data]);
+
+  const save = async () => {
+    await api.updateUser({ name, currency });
+    qc.invalidateQueries({ queryKey: ["user"] });
+    router.back();
+  };
+
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 140, paddingHorizontal: spacing.lg }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: spacing.lg }}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
+        </Pressable>
+        <Text style={styles.title}>Ajustes</Text>
+      </View>
+
+      <Text style={styles.label}>Nombre</Text>
+      <TextInput value={name} onChangeText={setName} placeholder="Tu nombre" placeholderTextColor={colors.muted} style={styles.input} />
+
+      <Text style={styles.label}>Moneda</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+        {CURRENCIES.map((c) => (
+          <Pressable key={c} onPress={() => setCurrency(c)} style={[styles.currency, currency === c && { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary }]}>
+            <Text style={{ color: currency === c ? "#fff" : colors.onSurface, fontWeight: "700" }}>{c}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Pressable testID="save-settings" onPress={save} style={styles.saveBtn}>
+        <Text style={styles.saveText}>Guardar</Text>
+      </Pressable>
+
+      <Pressable
+        testID="reseed"
+        onPress={async () => { await api.seed(); qc.invalidateQueries(); }}
+        style={[styles.saveBtn, { marginTop: 12, backgroundColor: colors.surfaceSecondary, borderWidth: 1, borderColor: colors.border }]}
+      >
+        <Text style={[styles.saveText, { color: colors.onSurface }]}>Restaurar datos de ejemplo</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
+  title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
+  label: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "uppercase", marginTop: 16, marginBottom: 8, letterSpacing: 0.5 },
+  input: { fontSize: 15, color: colors.onSurface, backgroundColor: colors.surfaceSecondary, padding: 14, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border },
+  currency: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.pill, backgroundColor: colors.surfaceSecondary, borderWidth: 1, borderColor: colors.border },
+  saveBtn: { marginTop: 28, backgroundColor: colors.brandPrimary, padding: 16, borderRadius: radius.pill, alignItems: "center" },
+  saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+});

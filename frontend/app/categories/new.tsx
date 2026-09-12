@@ -1,0 +1,110 @@
+import React, { useEffect, useState } from "react";
+import { View, Text, TextInput, ScrollView, Pressable, StyleSheet, Alert } from "react-native";
+import Ionicons from "@react-native-vector-icons/ionicons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/src/api";
+import { colors, radius, spacing } from "@/src/theme";
+import { IconTile } from "@/src/components/ui";
+
+const ICONS = [
+  "restaurant-outline", "cart-outline", "pizza-outline", "car-outline",
+  "flame-outline", "home-outline", "flash-outline", "call-outline",
+  "wifi-outline", "musical-notes-outline", "bag-outline", "medkit-outline",
+  "briefcase-outline", "school-outline", "airplane-outline", "cash-outline",
+  "star-outline", "gift-outline", "heart-outline", "paw-outline",
+];
+const COLORS = ["#FF8A3D", "#F5B83B", "#FF654A", "#4C83EA", "#D95345", "#8F5BE8", "#29C4A9", "#2FA47C", "#27221F", "#8E8883"];
+
+export default function CategoryForm() {
+  const params = useLocalSearchParams<{ id?: string }>();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const qc = useQueryClient();
+
+  const [name, setName] = useState("");
+  const [type, setType] = useState<"expense" | "income">("expense");
+  const [icon, setIcon] = useState(ICONS[0]);
+  const [color, setColor] = useState(COLORS[0]);
+
+  useEffect(() => {
+    if (params.id) {
+      api.listCategories().then((all) => {
+        const c = all.find((x: any) => x.id === params.id);
+        if (c) { setName(c.name); setType(c.type); setIcon(c.icon); setColor(c.color); }
+      });
+    }
+  }, [params.id]);
+
+  const save = async () => {
+    if (!name.trim()) return Alert.alert("Falta nombre");
+    const payload = { name, type, icon, color };
+    if (params.id) await api.updateCategory(params.id as string, payload);
+    else await api.createCategory(payload);
+    qc.invalidateQueries();
+    router.back();
+  };
+
+  const remove = async () => {
+    if (!params.id) return;
+    await api.deleteCategory(params.id as string);
+    qc.invalidateQueries();
+    router.back();
+  };
+
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 140, paddingHorizontal: spacing.lg }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: spacing.lg }}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
+        </Pressable>
+        <Text style={styles.title}>{params.id ? "Editar" : "Nueva"} categoría</Text>
+        {params.id && <Pressable onPress={remove} style={styles.backBtn}><Ionicons name="trash-outline" size={22} color={colors.expenseRed} /></Pressable>}
+      </View>
+
+      <Text style={styles.label}>Nombre</Text>
+      <TextInput value={name} onChangeText={setName} placeholder="Ej. Comida" placeholderTextColor={colors.muted} style={styles.input} />
+
+      <Text style={styles.label}>Tipo</Text>
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {(["expense", "income"] as const).map((t) => (
+          <Pressable key={t} onPress={() => setType(t)} style={[styles.typeBtn, type === t && { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary }]}>
+            <Text style={{ color: type === t ? "#fff" : colors.onSurface, fontWeight: "700" }}>{t === "expense" ? "Gasto" : "Ingreso"}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Icono</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+        {ICONS.map((ic) => (
+          <Pressable key={ic} onPress={() => setIcon(ic)} style={[styles.iconOpt, icon === ic && { borderColor: color, borderWidth: 2 }]}>
+            <IconTile icon={ic} tint={color} size={36} />
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Color</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+        {COLORS.map((c) => (
+          <Pressable key={c} onPress={() => setColor(c)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c, borderWidth: color === c ? 3 : 0, borderColor: colors.onSurface }} />
+        ))}
+      </View>
+
+      <Pressable testID="save-category" onPress={save} style={styles.saveBtn}>
+        <Text style={styles.saveText}>Guardar</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
+  title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
+  label: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "uppercase", marginTop: 16, marginBottom: 8, letterSpacing: 0.5 },
+  input: { fontSize: 15, color: colors.onSurface, backgroundColor: colors.surfaceSecondary, padding: 14, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border },
+  typeBtn: { flex: 1, padding: 12, borderRadius: radius.lg, backgroundColor: colors.surfaceSecondary, alignItems: "center", borderWidth: 1, borderColor: colors.border },
+  iconOpt: { padding: 4, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSecondary },
+  saveBtn: { marginTop: 28, backgroundColor: colors.brandPrimary, padding: 16, borderRadius: radius.pill, alignItems: "center" },
+  saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+});

@@ -1,0 +1,54 @@
+import React from "react";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import Ionicons from "@react-native-vector-icons/ionicons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/src/api";
+import { colors, radius, spacing } from "@/src/theme";
+import { IconTile } from "@/src/components/ui";
+
+export default function Categories() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const q = useQuery({ queryKey: ["categories"], queryFn: api.listCategories });
+  const cats: any[] = q.data || [];
+
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 140, paddingHorizontal: spacing.lg }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: spacing.lg }}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
+        </Pressable>
+        <Text style={styles.title}>Categorías</Text>
+        <Pressable testID="add-category" onPress={() => router.push("/categories/new")} style={[styles.backBtn, { backgroundColor: colors.brandPrimary }]}>
+          <Ionicons name="add" size={22} color="#fff" />
+        </Pressable>
+      </View>
+
+      <View style={styles.grid}>
+        {cats.map((c) => (
+          <Pressable
+            key={c.id}
+            testID={`cat-item-${c.id}`}
+            onPress={() => router.push(`/categories/new?id=${c.id}`)}
+            style={styles.gridItem}
+          >
+            <IconTile icon={c.icon} tint={c.color} size={54} />
+            <Text style={styles.name}>{c.name}</Text>
+            <Text style={styles.type}>{c.type === "income" ? "Ingreso" : "Gasto"}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
+  title: { flex: 1, fontSize: 22, fontWeight: "800", color: colors.onSurface },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+  gridItem: { width: "31%", backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, padding: 12, alignItems: "center", borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
+  name: { color: colors.onSurface, fontWeight: "700", fontSize: 12, marginTop: 8, textAlign: "center" },
+  type: { color: colors.muted, fontSize: 10, marginTop: 2 },
+});

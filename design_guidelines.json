@@ -1,0 +1,223 @@
+{
+  "app_name": "MoneyFlow",
+  "personality": "4 Tactile / Playful LIGHT",
+  "personality_one_liner": "A colorful, approachable, and playful financial companion that replaces sterile dashboards with warm, tactile, and gamified interactions.",
+  "color": {
+    "surface": "#FFF8F2",
+    "onSurface": "#27221F",
+    "surfaceSecondary": "#FFFFFF",
+    "onSurfaceSecondary": "#27221F",
+    "surfaceTertiary": "#F2EBE5",
+    "onSurfaceTertiary": "#27221F",
+    "surfaceInverse": "#27221F",
+    "onSurfaceInverse": "#FFF8F2",
+    "brand": "#FF654A",
+    "brandPrimary": "#FF654A",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#FF8A3D",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#FFD3C9",
+    "onBrandTertiary": "#FF654A",
+    "success": "#2FA47C",
+    "onSuccess": "#FFFFFF",
+    "warning": "#F5B83B",
+    "onWarning": "#FFFFFF",
+    "error": "#D95345",
+    "onError": "#FFFFFF",
+    "info": "#4C83EA",
+    "onInfo": "#FFFFFF",
+    "border": "#E8DFD8",
+    "borderStrong": "#D1C6BE",
+    "divider": "#E8DFD8",
+    "muted": "#8E8883",
+    "onBrand": "#FFFFFF",
+    "accountsBlue": "#4C83EA",
+    "statsPurple": "#8F5BE8",
+    "savingsTurquoise": "#29C4A9",
+    "loansYellow": "#F5B83B",
+    "incomeGreen": "#2FA47C",
+    "expenseRed": "#D95345"
+  },
+  "typography": {
+    "displayFontFamily": "Nunito",
+    "textFontFamily": "Nunito",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous padding around elements to make the interface feel touchable and uncrowded. 8pt grid system.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "card_lg": 28,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs_with_fab",
+  "icon_set": "Ionicons",
+  "glassmorphism": {
+    "enabled": "true",
+    "do's": [
+      "Use glass effect on the bottom tab bar to let content scroll behind it softly.",
+      "Use glass for the bottom sheet fast-menu background."
+    ],
+    "dont's": [
+      "Do not use glass on main dashboard cards; they should remain solid tactile #FFFFFF."
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler",
+    "charts": "react-native-chart-kit or react-native-gifted-charts"
+  },
+  "screens": [
+    {
+      "name": "Inicio",
+      "purpose": "Dashboard to see total balance, income/expenses, and recent movements at a glance.",
+      "states": {
+        "loading": "Skeleton cards with soft pulsing",
+        "empty": "Playful illustration of a piggy bank with 'Add your first transaction' CTA",
+        "error": "Oops illustration with a friendly retry button"
+      },
+      "layout": "Vertical scroll. Top: large balance card (28px radius) with coral/orange gradient. Below: 2-column flex-row grid for income (green) and expense (red) mini cards. Followed by a debt summary card and a list of 3-4 recent transactions."
+    },
+    {
+      "name": "Transacciones",
+      "purpose": "Searchable and filterable history of all user movements.",
+      "states": {
+        "loading": "Spinner centered",
+        "empty": "No transactions found matching the filter, clear filters CTA",
+        "error": "Error loading transactions, retry CTA"
+      },
+      "layout": "Sticky header with search bar (pill shape, surfaceTertiary). Horizontal scroll view for filter chips (Todos, Ingresos, Gastos) below search. FlatList of transaction rows (surfaceSecondary cards with left icon, middle text, right amount)."
+    },
+    {
+      "name": "Cuentas",
+      "purpose": "Manage multiple sources of money (cash, bank, credit card, wallet).",
+      "states": {
+        "loading": "Skeleton grid",
+        "empty": "Illustration of an empty wallet with 'Add an account' CTA",
+        "error": "Error loading accounts"
+      },
+      "layout": "Grid (2-col) or list of large tactile cards. Cards feature a prominent icon tinted with 'accountsBlue' or custom pastels, balance, and account name."
+    },
+    {
+      "name": "Categorías",
+      "purpose": "Manage custom categories with colors and icons.",
+      "states": {
+        "loading": "Spinner",
+        "empty": "No categories, add one CTA",
+        "error": "Error"
+      },
+      "layout": "Grid of rounded squares (card_lg radius), each displaying a large colored icon centered, with the category name below."
+    },
+    {
+      "name": "Presupuestos",
+      "purpose": "Track spending limits via progress bars.",
+      "states": {
+        "loading": "Spinner",
+        "empty": "Set your first budget illustration",
+        "error": "Error"
+      },
+      "layout": "Vertical list of cards. Each card contains the category name, amount spent vs limit, and a thick, rounded (pill) horizontal progress bar."
+    },
+    {
+      "name": "Metas de ahorro",
+      "purpose": "Track savings goals with circular progress.",
+      "states": {
+        "loading": "Spinner",
+        "empty": "3D colorful piggy bank illustration, 'Create a goal' CTA",
+        "error": "Error"
+      },
+      "layout": "2-column grid. Each card has a circular progress ring (savingsTurquoise) in the center, goal name, and amount saved."
+    },
+    {
+      "name": "Deudas y préstamos",
+      "purpose": "Track 'I owe' and 'They owe me'.",
+      "states": {
+        "loading": "Spinner",
+        "empty": "No active debts, 'Add a debt' CTA",
+        "error": "Error"
+      },
+      "layout": "Custom pill-shaped segment control at top (Yo Debo / Me Deben) and a secondary scrollable chip row for status (Todos, Activos, Pagados). List of cards showing person's name, amount, and a small circular progress ring."
+    },
+    {
+      "name": "Informes",
+      "purpose": "Visual breakdown of finances with charts.",
+      "states": {
+        "loading": "Chart skeletons",
+        "empty": "Not enough data for reports yet",
+        "error": "Error"
+      },
+      "layout": "Time selector chips (7d, 30d, 3m, 1a) at top. Large card containing a Donut, Bar, or Line chart (using pastel and statsPurple colors). Breakdown list below the chart."
+    },
+    {
+      "name": "Más",
+      "purpose": "Settings and additional configurations.",
+      "states": {
+        "loading": "None",
+        "empty": "None",
+        "error": "None"
+      },
+      "layout": "Vertical list of surfaceSecondary cards with brandTertiary tinted icon containers on the left."
+    }
+  ],
+  "components": {
+    "balance_card": "Height ~160pt, 28px radius (card_lg). Linear gradient (brandPrimary to brandSecondary). White text. Huge balance typography (3xl or custom 36pt).",
+    "income_expense_cards": "Flex: 1 each in a row grid. surfaceSecondary background. Top left: large icon in a circular container (tinted incomeGreen/expenseRed). Amount and label below. Light shadow tier 1.",
+    "transaction_row": "surfaceSecondary, radius md (16px), padding md. Flex row: Left icon (category color), Middle: Title and Date (muted), Right: Amount (green for +, black for -).",
+    "tab_bar_with_fab": "5 items. Items 1, 2, 4, 5 are standard tab icons. Middle slot is empty in the bar itself. An absolute positioned oversized circular button (FAB, ~64x64pt) sits above the center of the tab bar, colored in brandPrimary, with a prominent white '+' icon.",
+    "fast_menu_sheet": "Bottom sheet triggered by the central FAB. Displays a 3x2 grid of large, circular action buttons (Agregar gasto, ingreso, etc.) using the requested pastel palette."
+  },
+  "images": {
+    "hero_piggy": {
+      "url": "https://images.unsplash.com/photo-1662144374178-753a74fa28fb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHwzZCUyMGNvbG9yZnVsJTIwcGlnZ3klMjBiYW5rJTIwZmluYW5jZXxlbnwwfHx8fDE3ODkyMTA5MzZ8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "A pastel 3D piggy bank with colorful eggs around it"
+    },
+    "empty_state_colorful": {
+      "url": "https://images.unsplash.com/photo-1552250575-e508473b090f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwxfHxjb2xvcmZ1bCUyMGFic3RyYWN0JTIwc2hhcGVzJTIwcGxheWZ1bHxlbnwwfHx8fDE3ODkyMTA5MzZ8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Orange, blue, and white playful abstract artwork for empty states"
+    },
+    "wallet_3d": {
+      "url": "https://images.unsplash.com/photo-1669060475408-83e49cfe0bde?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwzfHxjcmVkaXQlMjBjYXJkJTIwbW9iaWxlJTIwcGF5bWVudCUyMGNvbG9yZnVsJTIwM2R8ZW58MHx8fHwxNzg5MjEwOTM2fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "3D render of a blue wallet and coins on a red background"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Follow the EXACT color hexes provided by the user (cream background, dark text, coral main action, specific colors for categories). Do not substitute them with generic AI blues unless specified in the payload (Accounts/Stats).",
+    "Ensure all cards use a very rounded radius (card_lg: 28px) to meet the user's '22-30px radius' requirement. Avoid sharp edges anywhere in the UI.",
+    "Implement a custom bottom tab bar with 5 slots where the center slot visually protrudes upward as a large circular FAB.",
+    "Use Nunito for both display and text fonts to give the app a friendly, touchable, and cohesive playful aesthetic.",
+    "Include subtle haptics on all major interactions (tab switching, FAB press, chip selection, slider/progress bar interactions).",
+    "Apply 'shadow_tier 1' (very soft shadows) strictly. Do not use harsh or long drop shadows; rely on the cream/white contrast for elevation."
+  ],
+  "haptics": {
+    "tab_press": "light",
+    "fab_press": "medium",
+    "chip_select": "light",
+    "transaction_save": "success",
+    "pull_to_refresh": "medium"
+  }
+}
