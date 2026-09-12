@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -10,6 +9,14 @@ import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 import { formatCurrency, formatDate, formatDateLong } from "@/src/format";
 import { IconTile } from "@/src/components/ui";
+
+function accountTypeLabel(t: string) {
+  const m: Record<string, string> = {
+    cash: "Efectivo", checking: "Corriente", savings: "Ahorro",
+    credit_card: "Tarjeta", wallet: "Wallet", other: "Otra",
+  };
+  return m[t] || t;
+}
 
 export default function Home() {
   const insets = useSafeAreaInsets();
@@ -20,12 +27,14 @@ export default function Home() {
   const userQ = useQuery({ queryKey: ["user"], queryFn: api.getUser });
   const txQ = useQuery({ queryKey: ["transactions"], queryFn: api.listTransactions });
   const catQ = useQuery({ queryKey: ["categories"], queryFn: api.listCategories });
+  const accQ = useQuery({ queryKey: ["accounts"], queryFn: api.listAccounts });
 
   const summary = summaryQ.data;
   const user = userQ.data;
   const recent = (txQ.data || []).slice(0, 6);
   const cats: any[] = catQ.data || [];
   const catById = Object.fromEntries(cats.map((c) => [c.id, c]));
+  const accounts: any[] = accQ.data || [];
 
   const money = (n: number) => (hidden ? "••••" : formatCurrency(n));
 
@@ -61,27 +70,48 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Balance card */}
-      <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
-        <LinearGradient
-          colors={[colors.brandPrimary, colors.brandSecondary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.balanceCard}
-        >
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={styles.balanceLabel}>Saldo total</Text>
-            <Pressable testID="toggle-hide-btn" onPress={() => setHidden((h) => !h)}>
-              <Ionicons name={hidden ? "eye-off-outline" : "eye-outline"} size={22} color="#fff" />
-            </Pressable>
-          </View>
-          <Text testID="total-balance" style={styles.balanceAmount}>{money(summary?.total_balance || 0)}</Text>
-          <Text style={styles.balanceSub}>En todas tus cuentas</Text>
-          <Pressable testID="view-accounts-btn" onPress={() => router.push("/accounts")} style={styles.balanceBtn}>
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>Todas las cuentas</Text>
-            <Ionicons name="arrow-forward" size={16} color="#fff" />
+      {/* Mis cuentas */}
+      <View style={{ paddingTop: spacing.lg }}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Mis cuentas</Text>
+          <Pressable testID="toggle-hide-btn" onPress={() => setHidden((h) => !h)} hitSlop={8}>
+            <Ionicons name={hidden ? "eye-off-outline" : "eye-outline"} size={20} color={colors.muted} />
           </Pressable>
-        </LinearGradient>
+        </View>
+        <Text style={styles.totalLine} testID="total-balance">
+          Saldo total: <Text style={{ color: colors.onSurface, fontWeight: "800" }}>{money(summary?.total_balance || 0)}</Text>
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.walletRow}
+        >
+          {accounts.map((a) => (
+            <Pressable
+              key={a.id}
+              testID={`wallet-${a.id}`}
+              onPress={() => router.push(`/accounts/new?id=${a.id}`)}
+              style={[styles.walletCard, { backgroundColor: a.color }]}
+            >
+              <View style={styles.walletIcon}>
+                <Ionicons name={a.icon as any} size={22} color="#fff" />
+              </View>
+              <Text style={styles.walletName} numberOfLines={1}>{a.name}</Text>
+              <Text style={styles.walletBalance}>{money(a.current_balance)}</Text>
+              <Text style={styles.walletType}>{accountTypeLabel(a.type)}</Text>
+            </Pressable>
+          ))}
+          <Pressable
+            testID="wallet-add"
+            onPress={() => router.push("/accounts/new")}
+            style={styles.walletAddCard}
+          >
+            <View style={styles.walletAddIcon}>
+              <Ionicons name="add" size={28} color={colors.brandPrimary} />
+            </View>
+            <Text style={styles.walletAddText}>Agregar{"\n"}cuenta</Text>
+          </Pressable>
+        </ScrollView>
       </View>
 
       {/* Income / Expense */}
@@ -226,6 +256,73 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.lg,
+  },
+  totalLine: {
+    color: colors.muted,
+    fontSize: 13,
+    marginTop: 2,
+    paddingHorizontal: spacing.lg,
+  },
+  walletRow: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    gap: 12,
+  },
+  walletCard: {
+    width: 148,
+    height: 164,
+    borderRadius: radius.lg,
+    padding: 14,
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  walletIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: "#ffffff33",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  walletName: { color: "#fff", fontSize: 13, fontWeight: "700", opacity: 0.9 },
+  walletBalance: { color: "#fff", fontSize: 20, fontWeight: "800", marginTop: 2 },
+  walletType: { color: "#ffffffbb", fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.4 },
+  walletAddCard: {
+    width: 148,
+    height: 164,
+    borderRadius: radius.lg,
+    padding: 14,
+    backgroundColor: colors.surfaceSecondary,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: colors.brandPrimary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  walletAddIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.brandTertiary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  walletAddText: {
+    marginTop: 10,
+    color: colors.brandPrimary,
+    fontWeight: "800",
+    textAlign: "center",
+    fontSize: 13,
   },
   miniRow: { flexDirection: "row", paddingHorizontal: spacing.lg, marginTop: spacing.md },
   miniCard: {
