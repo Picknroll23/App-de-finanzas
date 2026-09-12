@@ -81,37 +81,33 @@ export default function Home() {
         <Text style={styles.totalLine} testID="total-balance">
           Saldo total: <Text style={{ color: colors.onSurface, fontWeight: "800" }}>{money(summary?.total_balance || 0)}</Text>
         </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.walletRow}
-        >
-          {accounts.map((a) => (
-            <Pressable
-              key={a.id}
-              testID={`wallet-${a.id}`}
-              onPress={() => router.push(`/accounts/new?id=${a.id}`)}
-              style={[styles.walletCard, { backgroundColor: a.color }]}
-            >
-              <View style={styles.walletIcon}>
-                <Ionicons name={a.icon as any} size={22} color="#fff" />
-              </View>
-              <Text style={styles.walletName} numberOfLines={1}>{a.name}</Text>
-              <Text style={styles.walletBalance}>{money(a.current_balance)}</Text>
-              <Text style={styles.walletType}>{accountTypeLabel(a.type)}</Text>
-            </Pressable>
-          ))}
+        <View style={styles.walletGrid}>
+          {accounts.map((a, idx) => {
+            const isThird = (idx + 1) % 3 === 0;
+            return (
+              <Pressable
+                key={a.id}
+                testID={`wallet-${a.id}`}
+                onPress={() => router.push(`/accounts/new?id=${a.id}`)}
+                style={[styles.walletCard, { backgroundColor: a.color }, isThird && styles.walletCardLast]}
+              >
+                <Ionicons name={a.icon as any} size={18} color="#fff" />
+                <Text style={styles.walletName} numberOfLines={1}>{a.name}</Text>
+                <Text style={styles.walletBalance} numberOfLines={1} adjustsFontSizeToFit>
+                  {money(a.current_balance)}
+                </Text>
+              </Pressable>
+            );
+          })}
           <Pressable
             testID="wallet-add"
             onPress={() => router.push("/accounts/new")}
-            style={styles.walletAddCard}
+            style={[styles.walletAddCard, (accounts.length + 1) % 3 === 0 && styles.walletCardLast]}
           >
-            <View style={styles.walletAddIcon}>
-              <Ionicons name="add" size={28} color={colors.brandPrimary} />
-            </View>
+            <Ionicons name="add" size={22} color={colors.brandPrimary} />
             <Text style={styles.walletAddText}>Agregar{"\n"}cuenta</Text>
           </Pressable>
-        </ScrollView>
+        </View>
       </View>
 
       {/* Income / Expense */}
@@ -269,60 +265,56 @@ const styles = StyleSheet.create({
     marginTop: 2,
     paddingHorizontal: spacing.lg,
   },
-  walletRow: {
+  walletGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    gap: 12,
+    paddingTop: spacing.md,
   },
   walletCard: {
-    width: 148,
-    height: 164,
-    borderRadius: radius.lg,
-    padding: 14,
+    flexBasis: "31%",
+    flexGrow: 0,
+    flexShrink: 0,
+    marginRight: "3.5%",
+    marginBottom: 10,
+    minHeight: 84,
+    borderRadius: radius.md,
+    padding: 10,
     justifyContent: "space-between",
     shadowColor: "#000",
     shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
-  walletIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: "#ffffff33",
-    alignItems: "center",
-    justifyContent: "center",
+  walletCardLast: {
+    marginRight: 0,
   },
-  walletName: { color: "#fff", fontSize: 13, fontWeight: "700", opacity: 0.9 },
-  walletBalance: { color: "#fff", fontSize: 20, fontWeight: "800", marginTop: 2 },
-  walletType: { color: "#ffffffbb", fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.4 },
+  walletName: { color: "#fff", fontSize: 12, fontWeight: "700", marginTop: 4 },
+  walletBalance: { color: "#fff", fontSize: 13, fontWeight: "800", marginTop: 2 },
   walletAddCard: {
-    width: 148,
-    height: 164,
-    borderRadius: radius.lg,
-    padding: 14,
+    flexBasis: "31%",
+    flexGrow: 0,
+    flexShrink: 0,
+    marginRight: "3.5%",
+    marginBottom: 10,
+    minHeight: 84,
+    borderRadius: radius.md,
+    padding: 10,
     backgroundColor: colors.surfaceSecondary,
     borderWidth: 2,
     borderStyle: "dashed",
     borderColor: colors.brandPrimary,
     alignItems: "center",
     justifyContent: "center",
-  },
-  walletAddIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.brandTertiary,
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
   },
   walletAddText: {
-    marginTop: 10,
     color: colors.brandPrimary,
     fontWeight: "800",
-    textAlign: "center",
-    fontSize: 13,
+    fontSize: 11,
+    lineHeight: 14,
   },
   miniRow: { flexDirection: "row", paddingHorizontal: spacing.lg, marginTop: spacing.md },
   miniCard: {
