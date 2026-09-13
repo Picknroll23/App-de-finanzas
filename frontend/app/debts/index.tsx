@@ -9,6 +9,7 @@ import { colors, radius, spacing } from "@/src/theme";
 import { formatCurrency } from "@/src/format";
 import { ProgressBar } from "@/src/components/ProgressBar";
 import { Chip, IconTile } from "@/src/components/ui";
+import { LockToggle, useLock } from "@/src/lock";
 
 const TABS = [
   { id: "all", label: "Todos" },
@@ -21,6 +22,7 @@ const TABS = [
 export default function Debts() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { guard } = useLock();
   const [tab, setTab] = useState("all");
   const q = useQuery({ queryKey: ["debts"], queryFn: api.listDebts });
   const debts: any[] = q.data || [];
@@ -48,6 +50,7 @@ export default function Debts() {
             <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
           </Pressable>
           <Text style={styles.title}>Deudas y préstamos</Text>
+          <LockToggle testID="lock-debts" compact />
           <Pressable testID="add-debt" onPress={() => router.push("/debts/new")} style={[styles.backBtn, { backgroundColor: colors.brandPrimary }]}>
             <Ionicons name="add" size={22} color="#fff" />
           </Pressable>
@@ -92,7 +95,7 @@ export default function Debts() {
               <Pressable
                 key={d.id}
                 testID={`debt-${d.id}`}
-                onPress={() => router.push(`/debts/${d.id}`)}
+                onPress={guard(() => router.push(`/debts/${d.id}`))}
                 style={styles.card}
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>

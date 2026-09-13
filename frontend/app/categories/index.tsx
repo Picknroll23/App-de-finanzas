@@ -7,20 +7,23 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 import { IconTile } from "@/src/components/ui";
+import { LockToggle, useLock } from "@/src/lock";
 
 export default function Categories() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { guard } = useLock();
   const q = useQuery({ queryKey: ["categories"], queryFn: api.listCategories });
   const cats: any[] = q.data || [];
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.surface }} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 140, paddingHorizontal: spacing.lg }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: spacing.lg }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: spacing.lg }}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
         </Pressable>
         <Text style={styles.title}>Categorías</Text>
+        <LockToggle testID="lock-cats" compact />
         <Pressable testID="add-category" onPress={() => router.push("/categories/new")} style={[styles.backBtn, { backgroundColor: colors.brandPrimary }]}>
           <Ionicons name="add" size={22} color="#fff" />
         </Pressable>
@@ -31,7 +34,7 @@ export default function Categories() {
           <Pressable
             key={c.id}
             testID={`cat-item-${c.id}`}
-            onPress={() => router.push(`/categories/new?id=${c.id}`)}
+            onPress={guard(() => router.push(`/categories/new?id=${c.id}`))}
             style={styles.gridItem}
           >
             <IconTile icon={c.icon} tint={c.color} size={54} />

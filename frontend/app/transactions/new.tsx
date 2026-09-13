@@ -52,12 +52,13 @@ export default function NewTransaction() {
 
   const save = async () => {
     const amt = parseFloat(amount);
-    if (!name.trim() || !amt || amt <= 0) {
-      Alert.alert("Falta información", "Ingresa nombre y monto válido");
+    if (!amt || amt <= 0) {
+      Alert.alert("Falta información", "Ingresa un monto válido");
       return;
     }
+    const finalName = name.trim() || "Sin descripción";
     const payload: any = {
-      name,
+      name: finalName,
       amount: amt,
       type,
       category_id: categoryId,

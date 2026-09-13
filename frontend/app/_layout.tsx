@@ -8,6 +8,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { ErrorBoundary } from "@/src/components/error-boundary";
 import { queryClient } from "@/src/query-client";
 import { colors } from "@/src/theme";
+import { LockProvider } from "@/src/lock";
 
 LogBox.ignoreAllLogs(true);
 
@@ -23,13 +24,15 @@ export default function RootLayout() {
         <SafeAreaProvider>
           <QueryClientProvider client={queryClient}>
             <BottomSheetModalProvider>
-              <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: colors.surface },
-                }}
-              />
+              <LockProvider>
+                <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: colors.surface },
+                  }}
+                />
+              </LockProvider>
             </BottomSheetModalProvider>
           </QueryClientProvider>
         </SafeAreaProvider>

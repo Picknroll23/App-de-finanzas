@@ -8,10 +8,12 @@ import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 import { formatCurrency } from "@/src/format";
 import { IconTile } from "@/src/components/ui";
+import { LockToggle, useLock } from "@/src/lock";
 
 export default function Accounts() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { guard } = useLock();
   const accQ = useQuery({ queryKey: ["accounts"], queryFn: api.listAccounts });
   const accs: any[] = accQ.data || [];
   const total = accs.reduce((s, a) => s + a.current_balance, 0);
@@ -26,6 +28,7 @@ export default function Accounts() {
           <Ionicons name="chevron-back" size={24} color={colors.onSurface} />
         </Pressable>
         <Text style={styles.title}>Cuentas</Text>
+        <LockToggle testID="lock-accounts" compact />
         <Pressable testID="add-account" onPress={() => router.push("/accounts/new")} style={[styles.backBtn, { backgroundColor: colors.brandPrimary }]}>
           <Ionicons name="add" size={22} color="#fff" />
         </Pressable>
@@ -41,7 +44,7 @@ export default function Accounts() {
           <Pressable
             testID={`account-${a.id}`}
             key={a.id}
-            onPress={() => router.push(`/accounts/new?id=${a.id}`)}
+            onPress={guard(() => router.push(`/accounts/new?id=${a.id}`))}
             style={styles.row}
           >
             <IconTile icon={a.icon} tint={a.color} size={48} />

@@ -9,6 +9,7 @@ import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 import { formatCurrency, formatDate, formatDateLong } from "@/src/format";
 import { IconTile } from "@/src/components/ui";
+import { LockToggle, useLock } from "@/src/lock";
 
 function accountTypeLabel(t: string) {
   const m: Record<string, string> = {
@@ -21,6 +22,7 @@ function accountTypeLabel(t: string) {
 export default function Home() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { guard } = useLock();
   const [hidden, setHidden] = useState(false);
 
   const summaryQ = useQuery({ queryKey: ["summary"], queryFn: api.summary });
@@ -88,7 +90,7 @@ export default function Home() {
               <Pressable
                 key={a.id}
                 testID={`wallet-${a.id}`}
-                onPress={() => router.push(`/accounts/new?id=${a.id}`)}
+                onPress={guard(() => router.push(`/accounts/new?id=${a.id}`))}
                 style={[styles.walletCard, { backgroundColor: a.color }, isThird && styles.walletCardLast]}
               >
                 <Ionicons name={a.icon as any} size={18} color="#fff" />
@@ -178,9 +180,12 @@ export default function Home() {
       <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.xl }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md }}>
           <Text style={styles.sectionTitle}>Transacciones recientes</Text>
-          <Pressable testID="see-all-tx" onPress={() => router.push("/(tabs)/transactions")}>
-            <Text style={{ color: colors.brandPrimary, fontWeight: "700" }}>Ver todo</Text>
-          </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <LockToggle testID="lock-home" compact />
+            <Pressable testID="see-all-tx" onPress={() => router.push("/(tabs)/transactions")}>
+              <Text style={{ color: colors.brandPrimary, fontWeight: "700" }}>Ver todo</Text>
+            </Pressable>
+          </View>
         </View>
         <View style={styles.txList}>
           {recent.length === 0 && (

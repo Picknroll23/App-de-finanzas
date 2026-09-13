@@ -8,6 +8,7 @@ import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 import { formatCurrency, formatDate } from "@/src/format";
 import { IconTile, Chip } from "@/src/components/ui";
+import { LockToggle, useLock } from "@/src/lock";
 
 const TYPE_FILTERS = [
   { id: "all", label: "Todos" },
@@ -29,6 +30,7 @@ const DATE_RANGES = [
 export default function Transactions() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { guard } = useLock();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [accountId, setAccountId] = useState<string | undefined>();
@@ -80,6 +82,7 @@ export default function Transactions() {
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Text style={styles.title}>Movimientos</Text>
+          <LockToggle testID="lock-tx" compact />
           <Pressable
             testID="open-filters"
             onPress={() => setFiltersOpen(true)}
@@ -191,7 +194,7 @@ export default function Transactions() {
           return (
             <Pressable
               testID={`tx-${item.id}`}
-              onPress={() => router.push(`/transactions/new?id=${item.id}`)}
+              onPress={guard(() => router.push(`/transactions/new?id=${item.id}`))}
               style={styles.row}
             >
               <IconTile icon={iconName} tint={tint} size={44} />
