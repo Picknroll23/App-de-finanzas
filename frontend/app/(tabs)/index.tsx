@@ -22,30 +22,25 @@ function accountTypeLabel(t: string) {
 function accountBars(accounts: any[], total: number) {
   const positives = accounts.filter((a) => a.current_balance > 0);
   const base = total > 0 ? total : positives.reduce((s, a) => s + a.current_balance, 0);
-  const top = [...positives].sort((a, b) => b.current_balance - a.current_balance).slice(0, 3);
-  if (top.length === 0) {
-    return (
-      <Text style={{ color: colors.muted, fontSize: 10 }}>Sin cuentas</Text>
-    );
+  const sorted = [...positives].sort((a, b) => b.current_balance - a.current_balance);
+  if (sorted.length === 0) {
+    return <Text style={{ color: colors.muted, fontSize: 10 }}>Sin cuentas</Text>;
   }
-  return top.map((a) => {
+  return sorted.map((a) => {
     const pct = base > 0 ? Math.round((a.current_balance / base) * 100) : 0;
     return (
       <View key={a.id}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text
-            numberOfLines={1}
-            style={{ flex: 1, marginRight: 4, fontSize: 10, fontWeight: "600", color: colors.onSurface }}
-          >
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <Text style={{ flexShrink: 1, fontSize: 9, fontWeight: "600", color: colors.onSurface }}>
             {a.name}
           </Text>
-          <Text style={{ fontSize: 10, fontWeight: "700", color: a.color }}>{pct}%</Text>
+          <Text style={{ fontSize: 9, fontWeight: "700", color: a.color, marginLeft: 4 }}>{pct}%</Text>
         </View>
         <View
           style={{
-            marginTop: 3,
-            height: 5,
-            borderRadius: 3,
+            marginTop: 2,
+            height: 4,
+            borderRadius: 2,
             backgroundColor: colors.surfaceTertiary,
             overflow: "hidden",
           }}
@@ -152,28 +147,33 @@ export default function Home() {
 
       {/* Income / Expense / Accounts distribution */}
       <View style={styles.miniRow}>
-        <View style={[styles.miniCard, styles.miniCol]}>
-          <IconTile icon="trending-up-outline" tint={colors.incomeGreen} size={34} />
-          <Text style={styles.miniLabel}>Ingresos</Text>
-          <Text style={[styles.miniAmount, { color: colors.incomeGreen }]} numberOfLines={1} adjustsFontSizeToFit>
-            +{money(summary?.month_income || 0)}
-          </Text>
-          <Text style={styles.miniSub}>Este mes</Text>
-        </View>
-        <View style={[styles.miniCard, styles.miniCol]}>
-          <IconTile icon="trending-down-outline" tint={colors.expenseRed} size={34} />
-          <Text style={styles.miniLabel}>Gastos</Text>
-          <Text style={[styles.miniAmount, { color: colors.expenseRed }]} numberOfLines={1} adjustsFontSizeToFit>
-            -{money(summary?.month_expense || 0)}
-          </Text>
-          <Text style={styles.miniSub}>Este mes</Text>
-        </View>
-        <View style={[styles.miniCard, styles.miniCol, styles.miniColLast]}>
-          <IconTile icon="wallet-outline" tint={colors.accountsBlue} size={34} />
-          <Text style={styles.miniLabel}>Cuentas</Text>
-          <View style={{ marginTop: 6, gap: 6, width: "100%" }}>
-            {accountBars(accounts, summary?.total_balance || 0)}
+        <View style={styles.miniLeft}>
+          <View style={[styles.miniCard, styles.miniHalfLeft]}>
+            <IconTile icon="trending-up-outline" tint={colors.incomeGreen} size={32} />
+            <Text style={styles.miniLabel}>Ingresos</Text>
+            <Text style={[styles.miniAmount, { color: colors.incomeGreen }]} numberOfLines={1} adjustsFontSizeToFit>
+              +{money(summary?.month_income || 0)}
+            </Text>
+            <Text style={styles.miniSub}>Este mes</Text>
           </View>
+          <View style={[styles.miniCard, styles.miniHalfRight]}>
+            <IconTile icon="trending-down-outline" tint={colors.expenseRed} size={32} />
+            <Text style={styles.miniLabel}>Gastos</Text>
+            <Text style={[styles.miniAmount, { color: colors.expenseRed }]} numberOfLines={1} adjustsFontSizeToFit>
+              -{money(summary?.month_expense || 0)}
+            </Text>
+            <Text style={styles.miniSub}>Este mes</Text>
+          </View>
+        </View>
+        <View style={[styles.miniCard, styles.miniAccounts]}>
+          <ScrollView
+            testID="cuentas-scroll"
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ gap: 6 }}
+          >
+            {accountBars(accounts, summary?.total_balance || 0)}
+          </ScrollView>
         </View>
       </View>
 
@@ -366,21 +366,37 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
   },
-  miniRow: { flexDirection: "row", paddingHorizontal: spacing.lg, marginTop: spacing.md },
+  miniRow: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    alignItems: "stretch",
+  },
+  miniLeft: {
+    flex: 3, // ~60%
+    flexDirection: "row",
+    marginRight: 8,
+  },
+  miniHalfLeft: {
+    flex: 1,
+    marginRight: 4,
+  },
+  miniHalfRight: {
+    flex: 1,
+    marginLeft: 4,
+  },
+  miniAccounts: {
+    flex: 2, // ~40%
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
   miniCard: {
     backgroundColor: colors.surfaceSecondary,
     borderRadius: radius.cardLg,
     padding: 12,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  miniCol: {
-    flex: 1,
-    marginRight: 8,
-    minHeight: 138,
-  },
-  miniColLast: {
-    marginRight: 0,
+    minHeight: 148,
   },
   miniLabel: { fontSize: 11, color: colors.muted, marginTop: 8, fontWeight: "600" },
   miniAmount: { fontSize: 16, fontWeight: "800", marginTop: 2 },
