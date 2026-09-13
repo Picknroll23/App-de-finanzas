@@ -19,6 +19,44 @@ function accountTypeLabel(t: string) {
   return m[t] || t;
 }
 
+function accountBars(accounts: any[], total: number) {
+  const positives = accounts.filter((a) => a.current_balance > 0);
+  const base = total > 0 ? total : positives.reduce((s, a) => s + a.current_balance, 0);
+  const top = [...positives].sort((a, b) => b.current_balance - a.current_balance).slice(0, 3);
+  if (top.length === 0) {
+    return (
+      <Text style={{ color: colors.muted, fontSize: 10 }}>Sin cuentas</Text>
+    );
+  }
+  return top.map((a) => {
+    const pct = base > 0 ? Math.round((a.current_balance / base) * 100) : 0;
+    return (
+      <View key={a.id}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <Text
+            numberOfLines={1}
+            style={{ flex: 1, marginRight: 4, fontSize: 10, fontWeight: "600", color: colors.onSurface }}
+          >
+            {a.name}
+          </Text>
+          <Text style={{ fontSize: 10, fontWeight: "700", color: a.color }}>{pct}%</Text>
+        </View>
+        <View
+          style={{
+            marginTop: 3,
+            height: 5,
+            borderRadius: 3,
+            backgroundColor: colors.surfaceTertiary,
+            overflow: "hidden",
+          }}
+        >
+          <View style={{ width: `${Math.max(4, pct)}%`, height: "100%", backgroundColor: a.color }} />
+        </View>
+      </View>
+    );
+  });
+}
+
 export default function Home() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -112,23 +150,30 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Income / Expense */}
+      {/* Income / Expense / Accounts distribution */}
       <View style={styles.miniRow}>
-        <View style={[styles.miniCard, { marginRight: 8 }]}>
-          <IconTile icon="trending-up-outline" tint={colors.incomeGreen} />
+        <View style={[styles.miniCard, styles.miniCol]}>
+          <IconTile icon="trending-up-outline" tint={colors.incomeGreen} size={34} />
           <Text style={styles.miniLabel}>Ingresos</Text>
-          <Text style={[styles.miniAmount, { color: colors.incomeGreen }]}>
+          <Text style={[styles.miniAmount, { color: colors.incomeGreen }]} numberOfLines={1} adjustsFontSizeToFit>
             +{money(summary?.month_income || 0)}
           </Text>
           <Text style={styles.miniSub}>Este mes</Text>
         </View>
-        <View style={[styles.miniCard, { marginLeft: 8 }]}>
-          <IconTile icon="trending-down-outline" tint={colors.expenseRed} />
+        <View style={[styles.miniCard, styles.miniCol]}>
+          <IconTile icon="trending-down-outline" tint={colors.expenseRed} size={34} />
           <Text style={styles.miniLabel}>Gastos</Text>
-          <Text style={[styles.miniAmount, { color: colors.expenseRed }]}>
+          <Text style={[styles.miniAmount, { color: colors.expenseRed }]} numberOfLines={1} adjustsFontSizeToFit>
             -{money(summary?.month_expense || 0)}
           </Text>
           <Text style={styles.miniSub}>Este mes</Text>
+        </View>
+        <View style={[styles.miniCard, styles.miniCol, styles.miniColLast]}>
+          <IconTile icon="wallet-outline" tint={colors.accountsBlue} size={34} />
+          <Text style={styles.miniLabel}>Cuentas</Text>
+          <View style={{ marginTop: 6, gap: 6, width: "100%" }}>
+            {accountBars(accounts, summary?.total_balance || 0)}
+          </View>
         </View>
       </View>
 
@@ -323,16 +368,23 @@ const styles = StyleSheet.create({
   },
   miniRow: { flexDirection: "row", paddingHorizontal: spacing.lg, marginTop: spacing.md },
   miniCard: {
-    flex: 1,
     backgroundColor: colors.surfaceSecondary,
     borderRadius: radius.cardLg,
-    padding: spacing.lg,
+    padding: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  miniLabel: { fontSize: 12, color: colors.muted, marginTop: 10, fontWeight: "600" },
-  miniAmount: { fontSize: 20, fontWeight: "800", marginTop: 2 },
-  miniSub: { fontSize: 11, color: colors.muted, marginTop: 2 },
+  miniCol: {
+    flex: 1,
+    marginRight: 8,
+    minHeight: 138,
+  },
+  miniColLast: {
+    marginRight: 0,
+  },
+  miniLabel: { fontSize: 11, color: colors.muted, marginTop: 8, fontWeight: "600" },
+  miniAmount: { fontSize: 16, fontWeight: "800", marginTop: 2 },
+  miniSub: { fontSize: 10, color: colors.muted, marginTop: 2 },
   debtCard: {
     backgroundColor: colors.surfaceSecondary,
     borderRadius: radius.cardLg,
