@@ -58,6 +58,10 @@ export default function RootLayout() {
                   screenOptions={{
                     headerShown: false,
                     contentStyle: { backgroundColor: colors.surface },
+                    animation: "slide_from_right",
+                    animationDuration: 200,
+                    animationTypeForReplace: "push",
+                    gestureEnabled: true,
                   }}
                 />
               </LockProvider>

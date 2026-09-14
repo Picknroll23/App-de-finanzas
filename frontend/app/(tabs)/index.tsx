@@ -148,18 +148,32 @@ export default function Home() {
       {/* Income / Expense / Accounts distribution */}
       <View style={styles.miniRow}>
         <View style={styles.miniLeft}>
-          <View style={[styles.miniCard, styles.miniHalfLeft]}>
-            <IconTile icon="trending-up-outline" tint={colors.incomeGreen} size={32} />
+          <View style={[styles.miniCard, styles.miniHalfLeft, styles.cardIncome]}>
+            <View style={[styles.miniPill, { backgroundColor: colors.incomeGreen }]}>
+              <Ionicons name="arrow-up" size={14} color="#fff" />
+            </View>
             <Text style={styles.miniLabel}>Ingresos</Text>
-            <Text style={[styles.miniAmount, { color: colors.incomeGreen }]} numberOfLines={1} adjustsFontSizeToFit>
+            <Text
+              style={[styles.miniAmount, { color: colors.incomeGreen }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               +{money(summary?.month_income || 0)}
             </Text>
             <Text style={styles.miniSub}>Este mes</Text>
           </View>
-          <View style={[styles.miniCard, styles.miniHalfRight]}>
-            <IconTile icon="trending-down-outline" tint={colors.expenseRed} size={32} />
+          <View style={[styles.miniCard, styles.miniHalfRight, styles.cardExpense]}>
+            <View style={[styles.miniPill, { backgroundColor: colors.expenseRed }]}>
+              <Ionicons name="arrow-down" size={14} color="#fff" />
+            </View>
             <Text style={styles.miniLabel}>Gastos</Text>
-            <Text style={[styles.miniAmount, { color: colors.expenseRed }]} numberOfLines={1} adjustsFontSizeToFit>
+            <Text
+              style={[styles.miniAmount, { color: colors.expenseRed }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               -{money(summary?.month_expense || 0)}
             </Text>
             <Text style={styles.miniSub}>Este mes</Text>
@@ -398,9 +412,28 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     minHeight: 148,
   },
-  miniLabel: { fontSize: 11, color: colors.muted, marginTop: 8, fontWeight: "600" },
-  miniAmount: { fontSize: 16, fontWeight: "800", marginTop: 2 },
-  miniSub: { fontSize: 10, color: colors.muted, marginTop: 2 },
+  cardIncome: {
+    backgroundColor: colors.incomeGreen + "14",
+    borderColor: colors.incomeGreen + "33",
+    padding: 10,
+    justifyContent: "space-between",
+  },
+  cardExpense: {
+    backgroundColor: colors.expenseRed + "14",
+    borderColor: colors.expenseRed + "33",
+    padding: 10,
+    justifyContent: "space-between",
+  },
+  miniPill: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  miniLabel: { fontSize: 12, color: colors.muted, marginTop: 4, fontWeight: "700" },
+  miniAmount: { fontSize: 14, fontWeight: "800", marginTop: 2 },
+  miniSub: { fontSize: 9, color: colors.muted, marginTop: 2, fontWeight: "600" },
   debtCard: {
     backgroundColor: colors.surfaceSecondary,
     borderRadius: radius.cardLg,
