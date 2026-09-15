@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
 import { formatCurrencyInt } from "@/src/format";
-import { ProgressBar } from "@/src/components/ProgressBar";
+import { ProgressRing } from "@/src/components/ProgressRing";
 import { Chip, IconTile } from "@/src/components/ui";
 import { LockToggle, useLock } from "@/src/lock";
 
@@ -90,53 +91,84 @@ export default function Debts() {
         <View style={{ paddingHorizontal: spacing.lg, gap: 12 }}>
           {filtered.map((d) => {
             const p = d.original_amount > 0 ? d.total_paid / d.original_amount : 0;
+            const pctInt = Math.round(p * 100);
             const isPaid = d.status === "paid";
             return (
               <Pressable
                 key={d.id}
                 testID={`debt-${d.id}`}
                 onPress={guard(() => router.push(`/debts/${d.id}`))}
-                style={styles.card}
+                style={[styles.card, { backgroundColor: d.color + "0D", borderColor: d.color + "22" }]}
               >
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <IconTile icon={d.icon} tint={d.color} size={44} />
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.debtName}>{d.name}</Text>
-                    <Text style={styles.debtSub}>
-                      {d.direction === "i_owe" ? "Yo debo" : "Me deben"} · {d.person || ""}
-                    </Text>
+                    <View style={styles.subRow}>
+                      <View style={[styles.statusPill, { backgroundColor: (isPaid ? colors.incomeGreen : d.color) + "22" }]}>
+                        <View style={[styles.statusDot, { backgroundColor: isPaid ? colors.incomeGreen : d.color }]} />
+                        <Text style={{ color: isPaid ? colors.incomeGreen : d.color, fontSize: 11, fontWeight: "600" }}>
+                          {isPaid ? "Pagada" : "Activa"}
+                        </Text>
+                      </View>
+                      <Text style={styles.debtSub} numberOfLines={1}>
+                        {d.direction === "i_owe" ? "Yo debo" : "Me deben"}{d.person ? ` · ${d.person}` : ""}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={[styles.badge, { backgroundColor: isPaid ? colors.incomeGreen + "22" : colors.brandPrimary + "22" }]}>
-                    <Text style={{ color: isPaid ? colors.incomeGreen : colors.brandPrimary, fontSize: 11, fontWeight: "700" }}>
-                      {isPaid ? "PAGADA" : "ACTIVO"}
+                  <ProgressRing size={54} stroke={6} progress={p} color={d.color} trackColor={d.color + "22"}>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: colors.onSurface, letterSpacing: -0.3 }}>
+                      {pctInt}%
                     </Text>
-                  </View>
+                  </ProgressRing>
                 </View>
+
                 <View style={styles.amountsRow}>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>Pendiente</Text>
+                    <View style={styles.amountHead}>
+                      <View style={[styles.amountIcon, { backgroundColor: colors.expenseRed + "1F" }]}>
+                        <Ionicons name="document-text-outline" size={11} color={colors.expenseRed} />
+                      </View>
+                      <Text style={styles.amountLabel}>Pendiente</Text>
+                    </View>
                     <Text style={[styles.amountValue, { color: colors.expenseRed }]}>
                       {formatCurrencyInt(d.remaining_amount)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>Pagado</Text>
+                    <View style={styles.amountHead}>
+                      <View style={[styles.amountIcon, { backgroundColor: colors.statsPurple + "1F" }]}>
+                        <Ionicons name="checkmark-circle" size={12} color={colors.statsPurple} />
+                      </View>
+                      <Text style={styles.amountLabel}>Pagado</Text>
+                    </View>
                     <Text style={[styles.amountValue, { color: colors.statsPurple }]}>
                       {formatCurrencyInt(d.total_paid)}
                     </Text>
                   </View>
                   <View style={styles.amountCol}>
-                    <Text style={styles.amountLabel}>Total</Text>
+                    <View style={styles.amountHead}>
+                      <View style={[styles.amountIcon, { backgroundColor: colors.accountsBlue + "1F" }]}>
+                        <Ionicons name="stats-chart" size={11} color={colors.accountsBlue} />
+                      </View>
+                      <Text style={styles.amountLabel}>Total</Text>
+                    </View>
                     <Text style={[styles.amountValue, { color: colors.onSurface }]}>
                       {formatCurrencyInt(d.original_amount)}
                     </Text>
                   </View>
                 </View>
-                <View style={{ marginTop: 12 }}>
-                  <ProgressBar progress={p} color={d.color} height={8} />
-                  <Text style={{ color: colors.muted, fontSize: 11, marginTop: 6, fontWeight: "500" }}>
-                    {Math.round(p * 100)}% pagado
-                  </Text>
+
+                <View style={styles.trackRow}>
+                  <View style={[styles.track, { backgroundColor: d.color + "1F" }]}>
+                    <LinearGradient
+                      colors={[d.color + "AA", d.color]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.trackFill, { width: `${Math.max(2, pctInt)}%` }]}
+                    />
+                  </View>
+                  <Text style={styles.trackPct}>{pctInt}%</Text>
                 </View>
               </Pressable>
             );
@@ -186,11 +218,47 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
   },
-  debtName: { fontSize: 16, fontWeight: "600", color: colors.onSurface, letterSpacing: -0.2 },
-  debtSub: { fontSize: 12, color: colors.muted, marginTop: 3, fontWeight: "400" },
-  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+  debtName: { fontSize: 15, fontWeight: "700", color: colors.onSurface, letterSpacing: -0.2 },
+  debtSub: { fontSize: 11, color: colors.muted, fontWeight: "400", flexShrink: 1 },
+  subRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+  },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
   amountsRow: { flexDirection: "row", marginTop: 16 },
   amountCol: { flex: 1 },
-  amountLabel: { fontSize: 12, color: colors.muted, fontWeight: "400", marginBottom: 4 },
-  amountValue: { fontSize: 17, fontWeight: "600", letterSpacing: -0.3 },
+  amountHead: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 },
+  amountIcon: {
+    width: 18,
+    height: 18,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  amountLabel: { fontSize: 11, color: colors.muted, fontWeight: "400" },
+  amountValue: { fontSize: 15, fontWeight: "700", letterSpacing: -0.3 },
+  trackRow: { flexDirection: "row", alignItems: "center", marginTop: 14, gap: 10 },
+  track: {
+    flex: 1,
+    height: 12,
+    borderRadius: 6,
+    overflow: "hidden",
+  },
+  trackFill: {
+    height: "100%",
+    borderRadius: 6,
+  },
+  trackPct: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.muted,
+    letterSpacing: -0.2,
+    minWidth: 34,
+    textAlign: "right",
+  },
 });
