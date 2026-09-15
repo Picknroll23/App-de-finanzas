@@ -6,6 +6,19 @@ export function formatCurrency(amount: number, currency = "USD"): string {
   return `${sign}${symbol}${formatted}`;
 }
 
+/**
+ * Currency display without decimals — visual-only helper for the debt cards.
+ * Rounds to the nearest integer and keeps the comma thousands separator.
+ * The stored value in the database is never modified.
+ */
+export function formatCurrencyInt(amount: number, currency = "USD"): string {
+  const sign = amount < 0 ? "-" : "";
+  const abs = Math.abs(Math.round(amount));
+  const formatted = abs.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const symbol = currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "MXN" ? "$" : "$";
+  return `${sign}${symbol}${formatted}`;
+}
+
 export function formatDate(iso: string): string {
   try {
     const d = new Date(iso);

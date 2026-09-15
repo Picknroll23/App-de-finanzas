@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
-import { formatCurrency, formatDateLong } from "@/src/format";
+import { formatCurrencyInt, formatDateLong } from "@/src/format";
 import { ProgressRing } from "@/src/components/ProgressRing";
 import { IconTile } from "@/src/components/ui";
 
@@ -69,22 +69,22 @@ export default function DebtDetail() {
       <View style={styles.cards}>
         <View style={styles.cardCol}>
           <Text style={styles.cardLabel}>Original</Text>
-          <Text style={styles.cardVal}>{formatCurrency(d.original_amount)}</Text>
+          <Text style={styles.cardVal}>{formatCurrencyInt(d.original_amount)}</Text>
         </View>
         <View style={styles.cardCol}>
           <Text style={styles.cardLabel}>Pendiente</Text>
-          <Text style={[styles.cardVal, { color: colors.expenseRed }]}>{formatCurrency(d.remaining_amount)}</Text>
+          <Text style={[styles.cardVal, { color: colors.expenseRed }]}>{formatCurrencyInt(d.remaining_amount)}</Text>
         </View>
         <View style={styles.cardCol}>
           <Text style={styles.cardLabel}>Pagado</Text>
-          <Text style={[styles.cardVal, { color: colors.statsPurple }]}>{formatCurrency(d.total_paid)}</Text>
+          <Text style={[styles.cardVal, { color: colors.statsPurple }]}>{formatCurrencyInt(d.total_paid)}</Text>
         </View>
       </View>
 
       <View style={styles.infoCard}>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Pago mínimo</Text>
-          <Text style={styles.infoVal}>{formatCurrency(d.minimum_payment)}</Text>
+          <Text style={styles.infoVal}>{formatCurrencyInt(d.minimum_payment)}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.infoRow}>
@@ -133,7 +133,7 @@ export default function DebtDetail() {
             <View key={p.id} style={styles.histRow}>
               <Ionicons name="checkmark-circle" size={22} color={colors.incomeGreen} />
               <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={{ fontWeight: "700", color: colors.onSurface }}>{formatCurrency(p.amount)}</Text>
+                <Text style={{ fontWeight: "700", color: colors.onSurface }}>{formatCurrencyInt(p.amount)}</Text>
                 <Text style={{ color: colors.muted, fontSize: 12 }}>{formatDateLong(p.date)}</Text>
               </View>
             </View>
@@ -150,20 +150,45 @@ export default function DebtDetail() {
 const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
-  title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
+  title: { flex: 1, fontSize: 20, fontWeight: "700", color: colors.onSurface, letterSpacing: -0.3 },
   hero: { marginHorizontal: spacing.lg, borderRadius: radius.cardLg, padding: spacing.xl, alignItems: "center" },
   cards: { flexDirection: "row", paddingHorizontal: spacing.lg, marginTop: spacing.md, gap: 10 },
-  cardCol: { flex: 1, backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  cardLabel: { fontSize: 11, color: colors.muted, fontWeight: "600" },
-  cardVal: { fontSize: 16, fontWeight: "800", color: colors.onSurface, marginTop: 4 },
-  infoCard: { marginHorizontal: spacing.lg, marginTop: spacing.md, backgroundColor: colors.surfaceSecondary, borderRadius: radius.cardLg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
-  infoRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 6 },
-  infoLabel: { color: colors.muted, fontWeight: "600" },
-  infoVal: { color: colors.onSurface, fontWeight: "700" },
+  cardCol: {
+    flex: 1,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  cardLabel: { fontSize: 12, color: colors.muted, fontWeight: "400" },
+  cardVal: { fontSize: 17, fontWeight: "600", color: colors.onSurface, marginTop: 4, letterSpacing: -0.3 },
+  infoCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.cardLg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  infoRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 8 },
+  infoLabel: { color: colors.muted, fontWeight: "400", fontSize: 13 },
+  infoVal: { color: colors.onSurface, fontWeight: "600", fontSize: 13 },
   divider: { height: 1, backgroundColor: colors.divider },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
   payBtn: { flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center", marginHorizontal: spacing.lg, marginTop: spacing.lg, padding: 16, borderRadius: radius.pill, backgroundColor: colors.brandPrimary },
-  payText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  payText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   historyCard: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.cardLg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  histRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
+  histRow: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
 });

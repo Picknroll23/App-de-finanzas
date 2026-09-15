@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
-import { formatCurrency } from "@/src/format";
+import { formatCurrency, formatCurrencyInt } from "@/src/format";
 import { IconTile } from "@/src/components/ui";
 
 export default function PayDebt() {
@@ -48,7 +48,7 @@ export default function PayDebt() {
           <Text style={{ color: colors.muted, fontSize: 12 }}>Deuda</Text>
           <Text style={{ fontSize: 18, fontWeight: "800", color: colors.onSurface, marginTop: 2 }}>{d.name}</Text>
           <Text style={{ fontSize: 13, color: colors.muted, marginTop: 2 }}>
-            Pendiente actual: {formatCurrency(d.remaining_amount)}
+            Pendiente actual: {formatCurrencyInt(d.remaining_amount)}
           </Text>
         </View>
 
@@ -81,11 +81,11 @@ export default function PayDebt() {
 
         {amt > 0 && (
           <View style={styles.preview}>
-            <View style={styles.pRow}><Text style={styles.pLabel}>Saldo anterior</Text><Text style={styles.pVal}>{formatCurrency(d.remaining_amount)}</Text></View>
-            <View style={styles.pRow}><Text style={styles.pLabel}>Pago</Text><Text style={[styles.pVal, { color: colors.brandPrimary }]}>-{formatCurrency(amt)}</Text></View>
+            <View style={styles.pRow}><Text style={styles.pLabel}>Saldo anterior</Text><Text style={styles.pVal}>{formatCurrencyInt(d.remaining_amount)}</Text></View>
+            <View style={styles.pRow}><Text style={styles.pLabel}>Pago</Text><Text style={[styles.pVal, { color: colors.brandPrimary }]}>-{formatCurrencyInt(amt)}</Text></View>
             <View style={[styles.pRow, { borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 8, marginTop: 4 }]}>
-              <Text style={[styles.pLabel, { fontWeight: "800", color: colors.onSurface }]}>Nuevo saldo</Text>
-              <Text style={[styles.pVal, { fontSize: 18 }]}>{formatCurrency(newBalance)}</Text>
+              <Text style={[styles.pLabel, { fontWeight: "600", color: colors.onSurface }]}>Nuevo saldo</Text>
+              <Text style={[styles.pVal, { fontSize: 18 }]}>{formatCurrencyInt(newBalance)}</Text>
             </View>
           </View>
         )}

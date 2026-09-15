@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
-import { formatCurrency } from "@/src/format";
+import { formatCurrencyInt } from "@/src/format";
 import { ProgressBar } from "@/src/components/ProgressBar";
 import { Chip, IconTile } from "@/src/components/ui";
 import { LockToggle, useLock } from "@/src/lock";
@@ -65,18 +65,18 @@ export default function Debts() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.sumLabel}>Pendiente</Text>
-              <Text style={[styles.sumVal, { color: colors.expenseRed }]}>{formatCurrency(summary.remaining)}</Text>
+              <Text style={[styles.sumVal, { color: colors.expenseRed }]}>{formatCurrencyInt(summary.remaining)}</Text>
             </View>
           </View>
           <View style={styles.divider} />
           <View style={styles.sumRow}>
             <View style={{ flex: 1 }}>
               <Text style={styles.sumLabel}>Total original</Text>
-              <Text style={styles.sumVal}>{formatCurrency(summary.original)}</Text>
+              <Text style={styles.sumVal}>{formatCurrencyInt(summary.original)}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.sumLabel}>Pagado</Text>
-              <Text style={[styles.sumVal, { color: colors.statsPurple }]}>{formatCurrency(summary.paid)}</Text>
+              <Text style={[styles.sumVal, { color: colors.statsPurple }]}>{formatCurrencyInt(summary.paid)}</Text>
             </View>
           </View>
         </View>
@@ -107,34 +107,34 @@ export default function Debts() {
                     </Text>
                   </View>
                   <View style={[styles.badge, { backgroundColor: isPaid ? colors.incomeGreen + "22" : colors.brandPrimary + "22" }]}>
-                    <Text style={{ color: isPaid ? colors.incomeGreen : colors.brandPrimary, fontSize: 11, fontWeight: "800" }}>
+                    <Text style={{ color: isPaid ? colors.incomeGreen : colors.brandPrimary, fontSize: 11, fontWeight: "700" }}>
                       {isPaid ? "PAGADA" : "ACTIVO"}
                     </Text>
                   </View>
                 </View>
-                <View style={{ flexDirection: "row", marginTop: 12 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.small}>Pendiente</Text>
-                    <Text style={{ fontWeight: "800", color: colors.expenseRed, fontSize: 15 }}>
-                      {formatCurrency(d.remaining_amount)}
+                <View style={styles.amountsRow}>
+                  <View style={styles.amountCol}>
+                    <Text style={styles.amountLabel}>Pendiente</Text>
+                    <Text style={[styles.amountValue, { color: colors.expenseRed }]}>
+                      {formatCurrencyInt(d.remaining_amount)}
                     </Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.small}>Pagado</Text>
-                    <Text style={{ fontWeight: "800", color: colors.statsPurple, fontSize: 15 }}>
-                      {formatCurrency(d.total_paid)}
+                  <View style={styles.amountCol}>
+                    <Text style={styles.amountLabel}>Pagado</Text>
+                    <Text style={[styles.amountValue, { color: colors.statsPurple }]}>
+                      {formatCurrencyInt(d.total_paid)}
                     </Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.small}>Total</Text>
-                    <Text style={{ fontWeight: "800", color: colors.onSurface, fontSize: 15 }}>
-                      {formatCurrency(d.original_amount)}
+                  <View style={styles.amountCol}>
+                    <Text style={styles.amountLabel}>Total</Text>
+                    <Text style={[styles.amountValue, { color: colors.onSurface }]}>
+                      {formatCurrencyInt(d.original_amount)}
                     </Text>
                   </View>
                 </View>
-                <View style={{ marginTop: 10 }}>
+                <View style={{ marginTop: 12 }}>
                   <ProgressBar progress={p} color={d.color} height={8} />
-                  <Text style={{ color: colors.muted, fontSize: 11, marginTop: 4 }}>
+                  <Text style={{ color: colors.muted, fontSize: 11, marginTop: 6, fontWeight: "500" }}>
                     {Math.round(p * 100)}% pagado
                   </Text>
                 </View>
@@ -156,16 +156,41 @@ export default function Debts() {
 const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
-  title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
-  summary: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.cardLg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
+  title: { flex: 1, fontSize: 20, fontWeight: "700", color: colors.onSurface, letterSpacing: -0.3 },
+  summary: {
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.cardLg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
   sumRow: { flexDirection: "row" },
-  sumLabel: { color: colors.muted, fontSize: 12, fontWeight: "600" },
-  sumVal: { fontSize: 20, fontWeight: "800", color: colors.onSurface, marginTop: 2 },
+  sumLabel: { color: colors.muted, fontSize: 12, fontWeight: "400" },
+  sumVal: { fontSize: 20, fontWeight: "600", color: colors.onSurface, marginTop: 4, letterSpacing: -0.3 },
   divider: { height: 1, backgroundColor: colors.divider, marginVertical: spacing.md },
   chipRow: { paddingHorizontal: spacing.lg, gap: 8, height: 56, alignItems: "center" },
-  card: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.cardLg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
-  debtName: { fontSize: 15, fontWeight: "800", color: colors.onSurface },
-  debtSub: { fontSize: 12, color: colors.muted, marginTop: 2 },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
-  small: { fontSize: 11, color: colors.muted, fontWeight: "600" },
+  card: {
+    backgroundColor: colors.surfaceSecondary,
+    borderRadius: radius.cardLg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  debtName: { fontSize: 16, fontWeight: "600", color: colors.onSurface, letterSpacing: -0.2 },
+  debtSub: { fontSize: 12, color: colors.muted, marginTop: 3, fontWeight: "400" },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: radius.pill },
+  amountsRow: { flexDirection: "row", marginTop: 16 },
+  amountCol: { flex: 1 },
+  amountLabel: { fontSize: 12, color: colors.muted, fontWeight: "400", marginBottom: 4 },
+  amountValue: { fontSize: 17, fontWeight: "600", letterSpacing: -0.3 },
 });

@@ -7,7 +7,7 @@ import { useRouter } from "expo-router";
 
 import { api } from "@/src/api";
 import { colors, radius, spacing } from "@/src/theme";
-import { formatCurrency, formatDate, formatDateLong } from "@/src/format";
+import { formatCurrency, formatCurrencyInt, formatDate, formatDateLong } from "@/src/format";
 import { IconTile } from "@/src/components/ui";
 import { LockToggle, useLock } from "@/src/lock";
 
@@ -72,6 +72,7 @@ export default function Home() {
   const accounts: any[] = accQ.data || [];
 
   const money = (n: number) => (hidden ? "••••" : formatCurrency(n));
+  const debtMoney = (n: number) => (hidden ? "••••" : formatCurrencyInt(n));
 
   return (
     <ScrollView
@@ -202,13 +203,13 @@ export default function Home() {
             <View style={{ flex: 1 }}>
               <Text style={styles.debtLabel}>Debo</Text>
               <Text style={[styles.debtValue, { color: colors.expenseRed }]}>
-                {money(summary?.debts?.i_owe || 0)}
+                {debtMoney(summary?.debts?.i_owe || 0)}
               </Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.debtLabel}>Me deben</Text>
               <Text style={[styles.debtValue, { color: colors.incomeGreen }]}>
-                {money(summary?.debts?.they_owe || 0)}
+                {debtMoney(summary?.debts?.they_owe || 0)}
               </Text>
             </View>
           </View>
@@ -217,17 +218,17 @@ export default function Home() {
             <View>
               <Text style={styles.debtLabel}>Pagado este mes</Text>
               <Text style={[styles.debtValue, { color: colors.statsPurple, fontSize: 16 }]}>
-                {money(summary?.debts?.paid_this_month || 0)}
+                {debtMoney(summary?.debts?.paid_this_month || 0)}
               </Text>
             </View>
             {summary?.debts?.next_payment && (
               <View style={{ alignItems: "flex-end" }}>
                 <Text style={styles.debtLabel}>Próximo pago</Text>
-                <Text style={{ color: colors.onSurface, fontWeight: "700", fontSize: 14 }}>
+                <Text style={{ color: colors.onSurface, fontWeight: "600", fontSize: 14 }}>
                   {formatDateLong(summary.debts.next_payment.date)}
                 </Text>
-                <Text style={{ color: colors.brandPrimary, fontWeight: "700" }}>
-                  {money(summary.debts.next_payment.amount)}
+                <Text style={{ color: colors.brandPrimary, fontWeight: "600" }}>
+                  {debtMoney(summary.debts.next_payment.amount)}
                 </Text>
               </View>
             )}
@@ -440,10 +441,15 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  debtTitle: { fontSize: 17, fontWeight: "800", color: colors.onSurface },
-  debtLabel: { fontSize: 12, color: colors.muted, fontWeight: "600" },
-  debtValue: { fontSize: 18, fontWeight: "800", marginTop: 2 },
+  debtTitle: { fontSize: 17, fontWeight: "600", color: colors.onSurface, letterSpacing: -0.3 },
+  debtLabel: { fontSize: 12, color: colors.muted, fontWeight: "400" },
+  debtValue: { fontSize: 18, fontWeight: "600", marginTop: 4, letterSpacing: -0.3 },
   divider: { height: 1, backgroundColor: colors.divider, marginVertical: spacing.md },
   sectionTitle: { fontSize: 16, fontWeight: "800", color: colors.onSurface },
   txList: {
