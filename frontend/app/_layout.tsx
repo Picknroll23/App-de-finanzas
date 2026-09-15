@@ -10,7 +10,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 import { ErrorBoundary } from "@/src/components/error-boundary";
 import { queryClient } from "@/src/query-client";
-import { colors } from "@/src/theme";
+import { colors, reconcileThemeOnBoot, getCurrentScheme } from "@/src/theme";
 import { LockProvider } from "@/src/lock";
 
 LogBox.ignoreAllLogs(true);
@@ -41,10 +41,16 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    reconcileThemeOnBoot();
+  }, []);
+
+  useEffect(() => {
     if (loaded) SplashScreen.hideAsync().catch(() => {});
   }, [loaded]);
 
   if (!loaded) return null;
+
+  const scheme = getCurrentScheme();
 
   return (
     <ErrorBoundary>
@@ -53,7 +59,7 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <BottomSheetModalProvider>
               <LockProvider>
-                <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
+                <StatusBar barStyle={scheme === "dark" ? "light-content" : "dark-content"} backgroundColor={colors.surface} />
                 <Stack
                   screenOptions={{
                     headerShown: false,

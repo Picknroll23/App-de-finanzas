@@ -1,8 +1,15 @@
-// MoneyFlow design tokens.
+// MoneyFlow design tokens. Supports light / dark / system mode.
+//
+// The theme is resolved SYNCHRONOUSLY at module load so every `StyleSheet.create`
+// that reads `colors.xxx` at the top of a file gets the correct palette without
+// having to refactor screens. When the user changes the theme in Settings we
+// persist the preference and reload the JS bundle so all styles rebuild.
 import { useMemo } from "react";
-import { Appearance, StyleSheet, useColorScheme } from "react-native";
+import { Appearance, Platform, StyleSheet, useColorScheme } from "react-native";
+import { storage } from "@/src/utils/storage";
 
 export type ColorScheme = "light" | "dark";
+export type ThemeMode = "light" | "dark" | "system";
 
 const light = {
   // Surfaces
@@ -50,16 +57,146 @@ const light = {
   expenseRed: "#D95345",
 };
 
+const dark: typeof light = {
+  // Surfaces — warm near-black background, slightly lighter cards
+  surface: "#141210",
+  onSurface: "#F5F1EC",
+  surfaceSecondary: "#1E1B18",
+  onSurfaceSecondary: "#F5F1EC",
+  surfaceTertiary: "#2A2622",
+  onSurfaceTertiary: "#F5F1EC",
+  surfaceInverse: "#F5F1EC",
+  onSurfaceInverse: "#141210",
+  muted: "#9E9791",
+
+  // Brand — slightly brighter coral for contrast on dark
+  brand: "#FF7A63",
+  onBrand: "#1A1512",
+  brandPrimary: "#FF7A63",
+  onBrandPrimary: "#1A1512",
+  brandSecondary: "#FF9C5A",
+  onBrandSecondary: "#1A1512",
+  brandTertiary: "#3E2620",
+  onBrandTertiary: "#FF9E8A",
+
+  // Status — same hues, brightened for dark bg
+  success: "#37C08D",
+  onSuccess: "#0F1613",
+  warning: "#F5B83B",
+  onWarning: "#1A1512",
+  error: "#EB6D5F",
+  onError: "#1A1512",
+  info: "#6D9BFF",
+  onInfo: "#0E1424",
+
+  // Lines
+  border: "#2C2723",
+  borderStrong: "#3B3630",
+  divider: "#2A2622",
+
+  // Module accents — same hues, adjusted for legibility on dark
+  accountsBlue: "#6D9BFF",
+  statsPurple: "#A57DFF",
+  savingsTurquoise: "#3ED4B9",
+  loansYellow: "#F5C556",
+  incomeGreen: "#37C08D",
+  expenseRed: "#EB6D5F",
+};
+
 export type ThemeColors = typeof light;
+export const themes: { light: ThemeColors; dark: ThemeColors } = { light, dark };
 
-export const defaultScheme = "light" satisfies ColorScheme;
-export const themes: { light: ThemeColors; dark?: ThemeColors } = { light };
-export const colors = light;
+// --- Synchronous initial-scheme resolution ---
+const THEME_KEY = "theme-mode";
 
-export function setColorScheme(scheme: ColorScheme | null) {
-  Appearance.setColorScheme?.(scheme);
+function readModeSync(): ThemeMode {
+  try {
+    if (Platform.OS === "web" && typeof (globalThis as any).localStorage !== "undefined") {
+      const v = (globalThis as any).localStorage.getItem(THEME_KEY);
+      if (v === "light" || v === "dark" || v === "system") return v;
+    }
+  } catch {}
+  return "system";
 }
-setColorScheme?.(themes.dark ? null : defaultScheme);
+
+function resolveScheme(mode: ThemeMode): ColorScheme {
+  if (mode === "light" || mode === "dark") return mode;
+  return Appearance.getColorScheme() === "dark" ? "dark" : "light";
+}
+
+const initialMode = readModeSync();
+const initialScheme = resolveScheme(initialMode);
+
+// Mutable singleton: styles read these keys once at StyleSheet.create time so
+// we replace the object contents (not the reference) with the chosen palette.
+const _colors: ThemeColors = { ...(initialScheme === "dark" ? dark : light) };
+export const colors: ThemeColors = _colors;
+export const defaultScheme: ColorScheme = initialScheme;
+
+export function getCurrentScheme(): ColorScheme {
+  return initialScheme;
+}
+
+export function getCurrentMode(): ThemeMode {
+  return initialMode;
+}
+
+/**
+ * Persist the user's theme choice and reload the JS bundle so every
+ * `StyleSheet.create` re-runs with the new palette. No screen refactor needed.
+ */
+export async function setThemeMode(mode: ThemeMode) {
+  try {
+    await storage.setItem(THEME_KEY, mode);
+    if (Platform.OS === "web") {
+      try {
+        if (typeof (globalThis as any).localStorage !== "undefined") {
+          (globalThis as any).localStorage.setItem(THEME_KEY, mode);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (globalThis as any).location?.reload?.();
+      } catch {}
+    } else {
+      Appearance.setColorScheme?.(mode === "system" ? null : mode);
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const expo = require("expo");
+        if (typeof expo.reloadAppAsync === "function") {
+          await expo.reloadAppAsync();
+        }
+      } catch {}
+    }
+  } catch (e) {
+    console.warn("setThemeMode error", e);
+  }
+}
+
+/**
+ * Called from _layout on startup — if the async-persisted mode differs from
+ * the mode we synchronously resolved at boot (e.g. cold start on native where
+ * we could only read Appearance), reload once so styles rebuild correctly.
+ */
+export async function reconcileThemeOnBoot() {
+  try {
+    const saved = await storage.getItem<string>(THEME_KEY, "");
+    if (!saved || saved === initialMode) return;
+    const desired = resolveScheme(saved as ThemeMode);
+    if (desired === initialScheme) return; // No visual change needed.
+    if (Platform.OS === "web") {
+      try {
+        if (typeof (globalThis as any).localStorage !== "undefined") {
+          (globalThis as any).localStorage.setItem(THEME_KEY, saved);
+        }
+        (globalThis as any).location?.reload?.();
+      } catch {}
+    } else {
+      Appearance.setColorScheme?.(saved === "system" ? null : (saved as ColorScheme));
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const expo = require("expo");
+      if (typeof expo.reloadAppAsync === "function") await expo.reloadAppAsync();
+    }
+  } catch {}
+}
 
 export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
   const system = useColorScheme();

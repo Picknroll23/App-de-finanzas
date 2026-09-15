@@ -5,9 +5,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { colors, radius, spacing, setThemeMode, getCurrentMode, type ThemeMode } from "@/src/theme";
 
 const CURRENCIES = ["USD", "EUR", "MXN", "COP", "ARS", "CLP"];
+const THEMES: { id: ThemeMode; label: string; icon: string }[] = [
+  { id: "light", label: "Claro", icon: "sunny-outline" },
+  { id: "dark", label: "Oscuro", icon: "moon-outline" },
+  { id: "system", label: "Sistema", icon: "phone-portrait-outline" },
+];
 
 export default function Settings() {
   const insets = useSafeAreaInsets();
@@ -49,6 +54,40 @@ export default function Settings() {
         ))}
       </View>
 
+      <Text style={styles.label}>Apariencia</Text>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        {THEMES.map((t) => {
+          const active = getCurrentMode() === t.id;
+          return (
+            <Pressable
+              key={t.id}
+              testID={`theme-${t.id}`}
+              onPress={() => setThemeMode(t.id)}
+              style={[
+                styles.themeBtn,
+                active && { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary },
+              ]}
+            >
+              <Ionicons
+                name={t.icon as any}
+                size={18}
+                color={active ? "#fff" : colors.onSurface}
+              />
+              <Text
+                style={{
+                  color: active ? "#fff" : colors.onSurface,
+                  fontWeight: "700",
+                  marginTop: 4,
+                  fontSize: 12,
+                }}
+              >
+                {t.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <Pressable testID="save-settings" onPress={save} style={styles.saveBtn}>
         <Text style={styles.saveText}>Guardar</Text>
       </Pressable>
@@ -70,6 +109,16 @@ const styles = StyleSheet.create({
   label: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "uppercase", marginTop: 16, marginBottom: 8, letterSpacing: 0.5 },
   input: { fontSize: 15, color: colors.onSurface, backgroundColor: colors.surfaceSecondary, padding: 14, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border },
   currency: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: radius.pill, backgroundColor: colors.surfaceSecondary, borderWidth: 1, borderColor: colors.border },
+  themeBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   saveBtn: { marginTop: 28, backgroundColor: colors.brandPrimary, padding: 16, borderRadius: radius.pill, alignItems: "center" },
   saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
 });
