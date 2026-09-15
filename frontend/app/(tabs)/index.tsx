@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
+import Svg, { Circle as SvgCircle, Path as SvgPath } from "react-native-svg";
 import { useQuery } from "@tanstack/react-query";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -195,43 +196,129 @@ export default function Home() {
       {/* Debts card */}
       <View style={{ paddingHorizontal: spacing.lg, marginTop: spacing.lg }}>
         <Pressable testID="debts-card" onPress={() => router.push("/debts")} style={styles.debtCard}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={styles.debtTitle}>Deudas</Text>
-            <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+          {/* soft abstract background */}
+          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+            <Svg width="100%" height="100%" viewBox="0 0 320 240" preserveAspectRatio="none">
+              <SvgCircle cx="24" cy="200" r="42" fill={colors.brandSecondary} opacity="0.06" />
+              <SvgCircle cx="290" cy="30" r="26" fill={colors.statsPurple} opacity="0.05" />
+              <SvgPath
+                d="M0 60 Q 60 40, 120 55 T 260 45 T 340 55"
+                stroke={colors.brandSecondary}
+                strokeOpacity="0.12"
+                strokeWidth="1"
+                fill="none"
+              />
+              <SvgPath
+                d="M20 210 Q 90 195, 160 205 T 320 200"
+                stroke={colors.brandPrimary}
+                strokeOpacity="0.08"
+                strokeWidth="1"
+                fill="none"
+              />
+              <SvgCircle cx="180" cy="122" r="4" fill={colors.brandPrimary} opacity="0.14" />
+              <SvgCircle cx="60" cy="120" r="2.5" fill={colors.statsPurple} opacity="0.2" />
+              {[0, 1, 2].map((r) =>
+                [0, 1, 2].map((c) => (
+                  <SvgCircle
+                    key={`d-${r}-${c}`}
+                    cx={295 + c * 6}
+                    cy={112 + r * 6}
+                    r="1.2"
+                    fill={colors.muted}
+                    opacity="0.35"
+                  />
+                )),
+              )}
+            </Svg>
           </View>
-          <View style={{ flexDirection: "row", marginTop: spacing.md }}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.debtLabel}>Debo</Text>
-              <Text style={[styles.debtValue, { color: colors.expenseRed }]}>
-                {debtMoney(summary?.debts?.i_owe || 0)}
-              </Text>
+
+          {/* header */}
+          <View style={styles.debtHeader}>
+            <View style={styles.debtHeaderIcon}>
+              <Ionicons name="wallet" size={22} color={colors.brandSecondary} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.debtLabel}>Me deben</Text>
-              <Text style={[styles.debtValue, { color: colors.incomeGreen }]}>
-                {debtMoney(summary?.debts?.they_owe || 0)}
-              </Text>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.debtTitle}>Deudas</Text>
+              <Text style={styles.debtHeaderSub}>Tu panorama financiero, en un vistazo.</Text>
+            </View>
+            <View style={styles.debtArrowBtn}>
+              <Ionicons name="chevron-forward" size={18} color={colors.onSurface} />
             </View>
           </View>
-          <View style={styles.divider} />
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <View>
-              <Text style={styles.debtLabel}>Pagado este mes</Text>
-              <Text style={[styles.debtValue, { color: colors.statsPurple, fontSize: 16 }]}>
-                {debtMoney(summary?.debts?.paid_this_month || 0)}
-              </Text>
-            </View>
-            {summary?.debts?.next_payment && (
-              <View style={{ alignItems: "flex-end" }}>
-                <Text style={styles.debtLabel}>Próximo pago</Text>
-                <Text style={{ color: colors.onSurface, fontWeight: "600", fontSize: 14 }}>
-                  {formatDateLong(summary.debts.next_payment.date)}
-                </Text>
-                <Text style={{ color: colors.brandPrimary, fontWeight: "600" }}>
-                  {debtMoney(summary.debts.next_payment.amount)}
-                </Text>
+
+          {/* first row */}
+          <View style={styles.debtQuadRow}>
+            <View style={styles.debtQuadLeft}>
+              <View style={styles.debtQuadInner}>
+                <View style={[styles.debtQuadIcon, { backgroundColor: colors.expenseRed + "1A" }]}>
+                  <Ionicons name="arrow-up" size={18} color={colors.expenseRed} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.debtQuadLabel}>Debo</Text>
+                  <Text style={[styles.debtQuadValue, { color: colors.expenseRed }]} numberOfLines={1} adjustsFontSizeToFit>
+                    {debtMoney(summary?.debts?.i_owe || 0)}
+                  </Text>
+                </View>
               </View>
-            )}
+            </View>
+            <View style={styles.debtVDivider} />
+            <View style={styles.debtQuadRight}>
+              <View style={styles.debtQuadInner}>
+                <View style={[styles.debtQuadIcon, { backgroundColor: colors.incomeGreen + "1A" }]}>
+                  <Ionicons name="arrow-down" size={18} color={colors.incomeGreen} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.debtQuadLabel}>Me deben</Text>
+                  <Text style={[styles.debtQuadValue, { color: colors.incomeGreen }]} numberOfLines={1} adjustsFontSizeToFit>
+                    {debtMoney(summary?.debts?.they_owe || 0)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.debtHDivider} />
+
+          {/* second row */}
+          <View style={styles.debtQuadRow}>
+            <View style={styles.debtQuadLeft}>
+              <View style={styles.debtQuadInner}>
+                <View style={[styles.debtQuadIcon, { backgroundColor: colors.statsPurple + "1A" }]}>
+                  <Ionicons name="card" size={17} color={colors.statsPurple} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.debtQuadLabel}>Pagado este mes</Text>
+                  <Text style={[styles.debtQuadValue, { color: colors.statsPurple }]} numberOfLines={1} adjustsFontSizeToFit>
+                    {debtMoney(summary?.debts?.paid_this_month || 0)}
+                  </Text>
+                  <Text style={styles.debtQuadFoot}>¡Buen progreso!</Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.debtVDivider} />
+            <View style={styles.debtQuadRight}>
+              <View style={styles.debtQuadInner}>
+                <View style={[styles.debtQuadIcon, { backgroundColor: colors.brandSecondary + "1F" }]}>
+                  <Ionicons name="calendar" size={17} color={colors.brandSecondary} />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.debtQuadLabel}>Próximo pago</Text>
+                  {summary?.debts?.next_payment ? (
+                    <>
+                      <Text style={styles.debtQuadDate} numberOfLines={1}>
+                        {formatDateLong(summary.debts.next_payment.date)}
+                      </Text>
+                      <Text style={[styles.debtQuadValue, { color: colors.brandSecondary, fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
+                        {debtMoney(summary.debts.next_payment.amount)}
+                      </Text>
+                      <Text style={styles.debtQuadFoot}>Mantén tus pagos al día</Text>
+                    </>
+                  ) : (
+                    <Text style={styles.debtQuadFoot}>Sin próximos pagos</Text>
+                  )}
+                </View>
+              </View>
+            </View>
           </View>
         </Pressable>
       </View>
@@ -441,13 +528,62 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: "hidden",
     shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  debtTitle: { fontSize: 17, fontWeight: "600", color: colors.onSurface, letterSpacing: -0.3 },
+  debtHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  debtHeaderIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.brandSecondary + "1A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  debtHeaderSub: {
+    fontSize: 12,
+    color: colors.muted,
+    fontWeight: "400",
+    marginTop: 2,
+  },
+  debtArrowBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  debtTitle: { fontSize: 20, fontWeight: "800", color: colors.onSurface, letterSpacing: -0.4 },
+  debtQuadRow: {
+    flexDirection: "row",
+    marginTop: 14,
+  },
+  debtQuadLeft: { flex: 1, paddingRight: 8 },
+  debtQuadRight: { flex: 1, paddingLeft: 12 },
+  debtQuadInner: { flexDirection: "row", alignItems: "flex-start" },
+  debtQuadIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  debtQuadLabel: { fontSize: 12, color: colors.muted, fontWeight: "500" },
+  debtQuadValue: { fontSize: 22, fontWeight: "800", marginTop: 2, letterSpacing: -0.5 },
+  debtQuadFoot: { fontSize: 10, color: colors.muted, marginTop: 2, fontWeight: "500" },
+  debtQuadDate: { fontSize: 12, color: colors.onSurface, fontWeight: "700", marginTop: 2 },
+  debtVDivider: { width: 1, backgroundColor: colors.divider, marginVertical: 4 },
+  debtHDivider: { height: 1, backgroundColor: colors.divider, marginTop: 14 },
   debtLabel: { fontSize: 12, color: colors.muted, fontWeight: "400" },
   debtValue: { fontSize: 18, fontWeight: "600", marginTop: 4, letterSpacing: -0.3 },
   divider: { height: 1, backgroundColor: colors.divider, marginVertical: spacing.md },
