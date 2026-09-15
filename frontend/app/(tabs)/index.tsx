@@ -235,14 +235,14 @@ export default function Home() {
           {/* header */}
           <View style={styles.debtHeader}>
             <View style={styles.debtHeaderIcon}>
-              <Ionicons name="wallet" size={22} color={colors.brandSecondary} />
+              <Ionicons name="wallet" size={18} color={colors.brandSecondary} />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.debtTitle}>Deudas</Text>
               <Text style={styles.debtHeaderSub}>Tu panorama financiero, en un vistazo.</Text>
             </View>
             <View style={styles.debtArrowBtn}>
-              <Ionicons name="chevron-forward" size={18} color={colors.onSurface} />
+              <Ionicons name="chevron-forward" size={14} color={colors.onSurface} />
             </View>
           </View>
 
@@ -251,7 +251,7 @@ export default function Home() {
             <View style={styles.debtQuadLeft}>
               <View style={styles.debtQuadInner}>
                 <View style={[styles.debtQuadIcon, { backgroundColor: colors.expenseRed + "1A" }]}>
-                  <Ionicons name="arrow-up" size={18} color={colors.expenseRed} />
+                  <Ionicons name="arrow-up" size={14} color={colors.expenseRed} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={styles.debtQuadLabel}>Debo</Text>
@@ -265,7 +265,7 @@ export default function Home() {
             <View style={styles.debtQuadRight}>
               <View style={styles.debtQuadInner}>
                 <View style={[styles.debtQuadIcon, { backgroundColor: colors.incomeGreen + "1A" }]}>
-                  <Ionicons name="arrow-down" size={18} color={colors.incomeGreen} />
+                  <Ionicons name="arrow-down" size={14} color={colors.incomeGreen} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={styles.debtQuadLabel}>Me deben</Text>
@@ -284,7 +284,7 @@ export default function Home() {
             <View style={styles.debtQuadLeft}>
               <View style={styles.debtQuadInner}>
                 <View style={[styles.debtQuadIcon, { backgroundColor: colors.statsPurple + "1A" }]}>
-                  <Ionicons name="card" size={17} color={colors.statsPurple} />
+                  <Ionicons name="card" size={14} color={colors.statsPurple} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={styles.debtQuadLabel}>Pagado este mes</Text>
@@ -299,7 +299,7 @@ export default function Home() {
             <View style={styles.debtQuadRight}>
               <View style={styles.debtQuadInner}>
                 <View style={[styles.debtQuadIcon, { backgroundColor: colors.brandSecondary + "1F" }]}>
-                  <Ionicons name="calendar" size={17} color={colors.brandSecondary} />
+                  <Ionicons name="calendar" size={14} color={colors.brandSecondary} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={styles.debtQuadLabel}>Próximo pago</Text>
@@ -308,7 +308,7 @@ export default function Home() {
                       <Text style={styles.debtQuadDate} numberOfLines={1}>
                         {formatDateLong(summary.debts.next_payment.date)}
                       </Text>
-                      <Text style={[styles.debtQuadValue, { color: colors.brandSecondary, fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
+                      <Text style={[styles.debtQuadValue, { color: colors.brandSecondary, fontSize: 15 }]} numberOfLines={1} adjustsFontSizeToFit>
                         {debtMoney(summary.debts.next_payment.amount)}
                       </Text>
                       <Text style={styles.debtQuadFoot}>Mantén tus pagos al día</Text>
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   debtCard: {
     backgroundColor: colors.surfaceSecondary,
     borderRadius: radius.cardLg,
-    padding: spacing.lg,
+    padding: 13,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: "hidden",
@@ -540,50 +540,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   debtHeaderIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: colors.brandSecondary + "1A",
     alignItems: "center",
     justifyContent: "center",
   },
   debtHeaderSub: {
-    fontSize: 12,
+    fontSize: 10,
     color: colors.muted,
     fontWeight: "400",
     marginTop: 2,
   },
   debtArrowBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  debtTitle: { fontSize: 20, fontWeight: "800", color: colors.onSurface, letterSpacing: -0.4 },
+  debtTitle: { fontSize: 16, fontWeight: "800", color: colors.onSurface, letterSpacing: -0.4 },
   debtQuadRow: {
     flexDirection: "row",
-    marginTop: 14,
+    marginTop: 11,
   },
-  debtQuadLeft: { flex: 1, paddingRight: 8 },
-  debtQuadRight: { flex: 1, paddingLeft: 12 },
+  debtQuadLeft: { flex: 1, paddingRight: 6 },
+  debtQuadRight: { flex: 1, paddingLeft: 10 },
   debtQuadInner: { flexDirection: "row", alignItems: "flex-start" },
   debtQuadIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  debtQuadLabel: { fontSize: 12, color: colors.muted, fontWeight: "500" },
-  debtQuadValue: { fontSize: 22, fontWeight: "800", marginTop: 2, letterSpacing: -0.5 },
-  debtQuadFoot: { fontSize: 10, color: colors.muted, marginTop: 2, fontWeight: "500" },
-  debtQuadDate: { fontSize: 12, color: colors.onSurface, fontWeight: "700", marginTop: 2 },
+  debtQuadLabel: { fontSize: 10, color: colors.muted, fontWeight: "500" },
+  debtQuadValue: { fontSize: 18, fontWeight: "800", marginTop: 2, letterSpacing: -0.5 },
+  debtQuadFoot: { fontSize: 8, color: colors.muted, marginTop: 2, fontWeight: "500" },
+  debtQuadDate: { fontSize: 10, color: colors.onSurface, fontWeight: "700", marginTop: 2 },
   debtVDivider: { width: 1, backgroundColor: colors.divider, marginVertical: 4 },
-  debtHDivider: { height: 1, backgroundColor: colors.divider, marginTop: 14 },
+  debtHDivider: { height: 1, backgroundColor: colors.divider, marginTop: 11 },
   debtLabel: { fontSize: 12, color: colors.muted, fontWeight: "400" },
   debtValue: { fontSize: 18, fontWeight: "600", marginTop: 4, letterSpacing: -0.3 },
   divider: { height: 1, backgroundColor: colors.divider, marginVertical: spacing.md },
