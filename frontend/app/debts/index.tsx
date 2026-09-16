@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import React, { useState, useMemo, useRef } from "react";
+import { View, Text, ScrollView, Pressable, StyleSheet, Animated, Easing, Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,12 +29,21 @@ export default function Debts() {
   const q = useQuery({ queryKey: ["debts"], queryFn: api.listDebts });
   const debts: any[] = q.data || [];
 
-  const summary = useMemo(() => {
-    const total = debts.length;
-    const remaining = debts.reduce((s, d) => s + d.remaining_amount, 0);
-    const original = debts.reduce((s, d) => s + d.original_amount, 0);
-    const paid = debts.reduce((s, d) => s + d.total_paid, 0);
-    return { total, remaining, original, paid };
+  // Two independent summaries — the top card must NEVER mix "yo debo" with
+  // "me deben". Each face aggregates only its own tipoRelacion.
+  const faces = useMemo(() => {
+    const build = (list: any[]) => {
+      const count = list.length;
+      const remaining = list.reduce((s, d) => s + d.remaining_amount, 0);
+      const original = list.reduce((s, d) => s + d.original_amount, 0);
+      const paid = list.reduce((s, d) => s + d.total_paid, 0);
+      const pct = original > 0 ? paid / original : 0;
+      return { count, remaining, original, paid, pct };
+    };
+    return {
+      owe: build(debts.filter((d) => d.direction === "i_owe")),
+      lent: build(debts.filter((d) => d.direction === "they_owe")),
+    };
   }, [debts]);
 
   const filtered = useMemo(() => {
@@ -57,29 +67,9 @@ export default function Debts() {
           </Pressable>
         </View>
 
-        {/* Summary */}
-        <View style={[styles.summary, { marginHorizontal: spacing.lg }]}>
-          <View style={styles.sumRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sumLabel}>Total deudas</Text>
-              <Text style={styles.sumVal}>{summary.total}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sumLabel}>Pendiente</Text>
-              <Text style={[styles.sumVal, { color: colors.expenseRed }]}>{formatCurrencyInt(summary.remaining)}</Text>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.sumRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sumLabel}>Total original</Text>
-              <Text style={styles.sumVal}>{formatCurrencyInt(summary.original)}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.sumLabel}>Pagado</Text>
-              <Text style={[styles.sumVal, { color: colors.statsPurple }]}>{formatCurrencyInt(summary.paid)}</Text>
-            </View>
-          </View>
+        {/* Summary — flip card: front = "Yo debo", back = "Me deben" */}
+        <View style={{ marginHorizontal: spacing.lg }}>
+          <DebtSummaryFlip owe={faces.owe} lent={faces.lent} />
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
@@ -261,4 +251,244 @@ const styles = StyleSheet.create({
     minWidth: 34,
     textAlign: "right",
   },
+});
+
+
+/* ------------------------------------------------------------------ */
+/* Summary flip card — front = "Yo debo", back = "Me deben".           */
+/* Kept as a self-contained dark-premium hero card so it looks         */
+/* identical in both light & dark themes. Only this top card changed.  */
+/* ------------------------------------------------------------------ */
+
+type FaceStat = { count: number; remaining: number; original: number; paid: number; pct: number };
+
+const TXT_PRIMARY = "#F5F1EC";
+const TXT_MUTED = "#9E9791";
+const PENDING_RED = "#EB6D5F";
+const RING_TRACK = "rgba(255,255,255,0.10)";
+
+const FACE_CFG = {
+  owe: {
+    accent: "#8F5BE8",
+    accentSoft: "rgba(143,92,232,0.16)",
+    border: "rgba(143,92,232,0.38)",
+    grad: ["#241C36", "#15121D"] as const,
+    glow: "rgba(143,92,232,0.20)",
+    headerIcon: "bar-chart" as const,
+    headerIconColor: "#FF7A63",
+    headerIconBg: "rgba(255,122,99,0.14)",
+    title: "Resumen de deudas",
+    subtitle: "Tus deudas y préstamos en un vistazo",
+    ringSub: "Pagado",
+    countLabel: "Total deudas",
+    doneLabel: "Pagado",
+    pillPrefix: "Has pagado el",
+    pillSuffix: "del total de tus deudas",
+  },
+  lent: {
+    accent: "#37C08D",
+    accentSoft: "rgba(55,192,141,0.14)",
+    border: "rgba(55,192,141,0.34)",
+    grad: ["#14261F", "#101815"] as const,
+    glow: "rgba(55,192,141,0.18)",
+    headerIcon: "cash-outline" as const,
+    headerIconColor: "#37C08D",
+    headerIconBg: "rgba(55,192,141,0.14)",
+    title: "Resumen de préstamos",
+    subtitle: "Lo que te deben, en un vistazo",
+    ringSub: "Recibido",
+    countLabel: "Total cuentas",
+    doneLabel: "Recibido",
+    pillPrefix: "Has recibido el",
+    pillSuffix: "del total que te deben",
+  },
+};
+
+function MetricRow({
+  icon,
+  iconColor,
+  label,
+  value,
+  valueColor,
+}: {
+  icon: any;
+  iconColor: string;
+  label: string;
+  value: string;
+  valueColor: string;
+}) {
+  return (
+    <View style={fs.metricRow}>
+      <View style={[fs.metricIcon, { backgroundColor: iconColor + "22" }]}>
+        <Ionicons name={icon} size={13} color={iconColor} />
+      </View>
+      <Text style={fs.metricLabel} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text style={[fs.metricValue, { color: valueColor }]} numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function SummaryFace({ v, s }: { v: "owe" | "lent"; s: FaceStat }) {
+  const cfg = FACE_CFG[v];
+  const pctInt = Math.round(s.pct * 100);
+  return (
+    <LinearGradient
+      colors={cfg.grad}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[fs.card, { borderColor: cfg.border }]}
+    >
+      <View pointerEvents="none" style={[fs.glow, { backgroundColor: cfg.glow }]} />
+
+      {/* header */}
+      <View style={fs.headerRow}>
+        <View style={[fs.headerIcon, { backgroundColor: cfg.headerIconBg }]}>
+          <Ionicons name={cfg.headerIcon} size={18} color={cfg.headerIconColor} />
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={fs.title}>{cfg.title}</Text>
+          <Text style={fs.subtitle} numberOfLines={1}>
+            {cfg.subtitle}
+          </Text>
+        </View>
+        <View style={[fs.flipHint, { borderColor: cfg.border }]}>
+          <Ionicons name="sync-outline" size={13} color={cfg.accent} />
+        </View>
+      </View>
+
+      {/* body */}
+      <View style={fs.body}>
+        <View style={fs.ringCol}>
+          <ProgressRing size={128} stroke={12} progress={s.pct} color={cfg.accent} trackColor={RING_TRACK}>
+            <Text style={fs.ringPct}>{pctInt}%</Text>
+            <Text style={fs.ringSub}>{cfg.ringSub}</Text>
+          </ProgressRing>
+          <Text style={[fs.ringCaption, { color: cfg.accent }]} numberOfLines={1}>
+            {formatCurrencyInt(s.paid)} <Text style={fs.ringCaptionMuted}>de {formatCurrencyInt(s.original)}</Text>
+          </Text>
+        </View>
+
+        <View style={fs.vDivider} />
+
+        <View style={fs.rows}>
+          <MetricRow icon="people-outline" iconColor={TXT_MUTED} label={cfg.countLabel} value={String(s.count)} valueColor={TXT_PRIMARY} />
+          <View style={fs.rowDivider} />
+          <MetricRow icon="document-text-outline" iconColor={PENDING_RED} label="Pendiente" value={formatCurrencyInt(s.remaining)} valueColor={PENDING_RED} />
+          <View style={fs.rowDivider} />
+          <MetricRow icon="server-outline" iconColor={TXT_MUTED} label="Total original" value={formatCurrencyInt(s.original)} valueColor={TXT_PRIMARY} />
+          <View style={fs.rowDivider} />
+          <MetricRow icon="checkmark-circle" iconColor={cfg.accent} label={cfg.doneLabel} value={formatCurrencyInt(s.paid)} valueColor={cfg.accent} />
+        </View>
+      </View>
+
+      {/* pill */}
+      <View style={[fs.pill, { borderColor: cfg.border, backgroundColor: cfg.accentSoft }]}>
+        <View style={[fs.pillIcon, { backgroundColor: cfg.accent }]}>
+          <Ionicons name="information" size={12} color="#fff" />
+        </View>
+        <Text style={fs.pillText} numberOfLines={1}>
+          {cfg.pillPrefix} <Text style={[fs.pillBold, { color: cfg.accent }]}>{pctInt}%</Text> {cfg.pillSuffix}
+        </Text>
+        <Ionicons name="chevron-forward" size={16} color={TXT_MUTED} />
+      </View>
+    </LinearGradient>
+  );
+}
+
+function DebtSummaryFlip({ owe, lent }: { owe: FaceStat; lent: FaceStat }) {
+  const flip = useRef(new Animated.Value(0)).current;
+  const flippedRef = useRef(false);
+
+  const toggle = () => {
+    Haptics.selectionAsync().catch(() => {});
+    const to = flippedRef.current ? 0 : 1;
+    flippedRef.current = !flippedRef.current;
+    Animated.timing(flip, {
+      toValue: to,
+      duration: 520,
+      easing: Easing.inOut(Easing.cubic),
+      useNativeDriver: Platform.OS !== "web",
+    }).start();
+  };
+
+  const frontRotate = flip.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] });
+  const backRotate = flip.interpolate({ inputRange: [0, 1], outputRange: ["180deg", "360deg"] });
+
+  return (
+    <Pressable onPress={toggle} accessibilityRole="button" testID="debt-summary-flip">
+      <Animated.View style={[fs.face, { transform: [{ perspective: 1200 }, { rotateY: frontRotate }] }]}>
+        <SummaryFace v="owe" s={owe} />
+      </Animated.View>
+      <Animated.View style={[fs.face, fs.faceBack, { transform: [{ perspective: 1200 }, { rotateY: backRotate }] }]}>
+        <SummaryFace v="lent" s={lent} />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+const fs = StyleSheet.create({
+  face: { backfaceVisibility: "hidden" },
+  faceBack: { ...StyleSheet.absoluteFillObject },
+  card: {
+    borderRadius: radius.cardLg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  glow: {
+    position: "absolute",
+    top: -70,
+    right: -50,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+  },
+  headerRow: { flexDirection: "row", alignItems: "center" },
+  headerIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 17, fontWeight: "700", color: TXT_PRIMARY, letterSpacing: -0.3 },
+  subtitle: { fontSize: 12, color: TXT_MUTED, marginTop: 2 },
+  flipHint: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    backgroundColor: "rgba(255,255,255,0.04)",
+  },
+  body: { flexDirection: "row", alignItems: "center", marginTop: spacing.lg },
+  ringCol: { width: 138, alignItems: "center" },
+  ringPct: { fontSize: 30, fontWeight: "800", color: TXT_PRIMARY, letterSpacing: -0.5 },
+  ringSub: { fontSize: 12, color: TXT_MUTED, marginTop: -2 },
+  ringCaption: { fontSize: 13, fontWeight: "700", marginTop: 12, letterSpacing: -0.2 },
+  ringCaptionMuted: { color: TXT_MUTED, fontWeight: "400" },
+  vDivider: { width: 1, alignSelf: "stretch", backgroundColor: "rgba(255,255,255,0.10)", marginHorizontal: spacing.md, marginVertical: 4 },
+  rows: { flex: 1 },
+  metricRow: { flexDirection: "row", alignItems: "center", paddingVertical: 7 },
+  metricIcon: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center" },
+  metricLabel: { flex: 1, marginLeft: 10, fontSize: 13, color: TXT_MUTED },
+  metricValue: { fontSize: 16, fontWeight: "800", letterSpacing: -0.3 },
+  rowDivider: { height: 1, backgroundColor: "rgba(255,255,255,0.07)" },
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: spacing.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  pillIcon: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  pillText: { flex: 1, fontSize: 12.5, color: TXT_MUTED },
+  pillBold: { fontWeight: "800" },
 });
