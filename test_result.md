@@ -101,3 +101,84 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  MoneyFlow finance app (Expo + FastAPI + Mongo). Recent work:
+  1) Debts screen top summary is now a FLIP CARD (front = "Yo debo" / i_owe, back = "Me deben" / they_owe) with corrected per-direction logic.
+  2) GLOBAL THEME SYSTEM refactor (reported bug): switching Claro/Oscuro/Sistema must instantly re-theme the WHOLE app (all screens/cards/flip card both faces) with a single source of truth, persist the preference, follow the device in "system", and the Back button must keep working after selecting a theme (previously it reloaded the JS bundle and reset the nav stack).
+  3) Dashboard Ingresos/Gastos cards enriched (icon, title, amount, mini bar chart, promedio diario) and made equal height to the accounts % card.
+
+frontend:
+  - task: "Global theme system (Claro/Oscuro/Sistema) reactive, persistent, no bundle reload"
+    implemented: true
+    working: "NA"
+    file: "src/theme.ts, app/_layout.tsx, app/settings.tsx, + all screens converted to makeStyles/useTheme"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Replaced boot-time singleton + bundle-reload approach with a React ThemeContext (ThemeProvider) exposing mode/scheme/colors/setMode. All screens converted from module-level StyleSheet.create(colors) to makeStyles((colors)=>...) + useTheme(). setMode only persists + updates state (no reload) so the navigation stack/back button is preserved. Fixed a web hydration bug where async storage overrode the synchronous localStorage value."
+  - task: "Settings theme selector + Back button after theme change"
+    implemented: true
+    working: "NA"
+    file: "app/settings.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Theme buttons now call setMode (context) instead of setThemeMode (which reloaded the bundle). Selecting a theme must NOT reset navigation; Back must still return to the previous screen."
+  - task: "Debts summary flip card (front Yo debo / back Me deben) theme-aware"
+    implemented: true
+    working: "NA"
+    file: "app/debts/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Tap flips 3D between i_owe (front) and they_owe (back). Both faces derive colors from the global theme so they follow light/dark."
+  - task: "Dashboard Ingresos/Gastos cards (icon, title, amount, mini bars, promedio diario) equal height to accounts card"
+    implemented: true
+    working: "NA"
+    file: "app/(tabs)/index.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "Only internal content of Ingresos/Gastos changed; widths unchanged; heights stretch to equal the accounts % card. Added MiniBars + DragDots + daily average."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Global theme system (Claro/Oscuro/Sistema) reactive, persistent, no bundle reload"
+    - "Settings theme selector + Back button after theme change"
+    - "Debts summary flip card (front Yo debo / back Me deben) theme-aware"
+    - "Dashboard Ingresos/Gastos cards (icon, title, amount, mini bars, promedio diario) equal height to accounts card"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: |
+        Please test on the WEB preview. Key scenarios:
+        THEME (main reported bug):
+          1. Go to Más -> Ajustes. Tap "Oscuro": the ENTIRE app must turn dark (dashboard, cards, headers, tabs, debts flip card BOTH faces, modals). Tap "Claro": entire app light. Tap "Sistema": follows device.
+          2. Sequence Claro -> Oscuro -> Claro must never leave any component stuck on the previous theme (check the Debts top flip card especially, and both of its faces).
+          3. After selecting ANY theme on the Ajustes screen, the Back button (top-left chevron) MUST still navigate back (it must NOT reset the stack / block navigation). Selecting a theme should NOT reload the app.
+          4. Persistence: reload the page after choosing Oscuro -> app should reopen in dark.
+        FLIP CARD (Debts): open "Deudas y préstamos"; tap the top summary card -> it flips between "Resumen de deudas" (Yo debo) and "Resumen de préstamos" (Me deben). Front totals: 2 debts, Pendiente 10,200, Total 14,500, Pagado 4,300. Back: 1 cuenta, Pendiente 700, Total 1,000, Recibido 300.
+        DASHBOARD: Inicio -> the Ingresos and Gastos cards each show icon + "Este mes" + drag dots + title + amount + mini bar chart + "Promedio diario"; the two cards are the same height as the percentages card to their right and aligned top & bottom.
+        Note: there is no auth. Data is seeded. Ignore CORS console noise if loading via a non-canonical domain.

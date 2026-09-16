@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
 import Svg, { Circle as SvgCircle, Path as SvgPath } from "react-native-svg";
 import { useQuery } from "@tanstack/react-query";
@@ -53,6 +53,56 @@ function accountBars(accounts: any[], total: number, colors: ThemeColors) {
   });
 }
 
+// Mini 7-bar chart for the income / expense cards. Uses real amounts; when a
+// period has no data it falls back to a soft placeholder pattern so the card
+// never looks empty. Colors are passed in to respect the current theme.
+function MiniBars({ data, color }: { data: number[]; color: string }) {
+  const max = Math.max(...data, 0);
+  const nonZero = data.filter((v) => v > 0).length;
+  const pattern = [0.45, 0.6, 0.5, 0.8, 0.55, 1, 0.65];
+  // With sparse real data (0-2 active days) the chart would look like a flat
+  // line, so fall back to a soft pattern to keep the reference look.
+  const usePattern = nonZero < 3;
+  return (
+    <View style={mb.row}>
+      {data.map((v, i) => {
+        const ratio = usePattern ? pattern[i % pattern.length] : v / max;
+        const peak = usePattern ? pattern[i % pattern.length] === 1 : v === max && v > 0;
+        return (
+          <View
+            key={i}
+            style={{
+              flex: 1,
+              height: 6 + ratio * 22,
+              borderRadius: 3,
+              backgroundColor: color + (peak ? "" : "59"),
+            }}
+          />
+        );
+      })}
+    </View>
+  );
+}
+
+// Small drag-handle affordance (2×3 dots) shown at the card's top-right.
+function DragDots({ color }: { color: string }) {
+  return (
+    <View style={{ flexDirection: "row", gap: 3 }}>
+      {[0, 1].map((c) => (
+        <View key={c} style={{ gap: 3 }}>
+          {[0, 1, 2].map((r) => (
+            <View key={r} style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: color }} />
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const mb = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "flex-end", height: 34, gap: 3, marginTop: 2 },
+});
+
 export default function Home() {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -76,6 +126,30 @@ export default function Home() {
 
   const money = (n: number) => (hidden ? "••••" : formatCurrency(n));
   const debtMoney = (n: number) => (hidden ? "••••" : formatCurrencyInt(n));
+
+  // Last-7-days mini-chart data + daily averages for the Income / Expense cards.
+  const stats = useMemo(() => {
+    const txs = txQ.data || [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const incBars = Array(7).fill(0) as number[];
+    const expBars = Array(7).fill(0) as number[];
+    txs.forEach((t: any) => {
+      const d = new Date(t.date);
+      d.setHours(0, 0, 0, 0);
+      const diff = Math.round((today.getTime() - d.getTime()) / 86400000);
+      if (diff < 0 || diff > 6) return;
+      if (t.type === "income") incBars[6 - diff] += t.amount;
+      else if (t.type === "expense" || t.type === "debt_payment") expBars[6 - diff] += t.amount;
+    });
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    return {
+      incBars,
+      expBars,
+      avgIncome: (summary?.month_income || 0) / daysInMonth,
+      avgExpense: (summary?.month_expense || 0) / daysInMonth,
+    };
+  }, [txQ.data, summary?.month_income, summary?.month_expense]);
 
   return (
     <ScrollView
@@ -153,8 +227,14 @@ export default function Home() {
       <View style={styles.miniRow}>
         <View style={styles.miniLeft}>
           <View style={[styles.miniCard, styles.miniHalfLeft, styles.cardIncome]}>
-            <View style={[styles.miniPill, { backgroundColor: colors.incomeGreen }]}>
-              <Ionicons name="arrow-up" size={14} color="#fff" />
+            <View style={styles.mcTop}>
+              <View style={[styles.miniPill, { backgroundColor: colors.incomeGreen }]}>
+                <Ionicons name="arrow-up" size={14} color="#fff" />
+              </View>
+              <View style={styles.mcTopRight}>
+                <Text style={styles.miniSub}>Este mes</Text>
+                <DragDots color={colors.muted} />
+              </View>
             </View>
             <Text style={styles.miniLabel}>Ingresos</Text>
             <Text
@@ -165,11 +245,21 @@ export default function Home() {
             >
               +{money(summary?.month_income || 0)}
             </Text>
-            <Text style={styles.miniSub}>Este mes</Text>
+            <MiniBars data={stats.incBars} color={colors.incomeGreen} />
+            <View style={styles.mcAvg}>
+              <Text style={styles.mcAvgLabel}>Promedio diario</Text>
+              <Text style={styles.mcAvgVal}>{money(stats.avgIncome)}</Text>
+            </View>
           </View>
           <View style={[styles.miniCard, styles.miniHalfRight, styles.cardExpense]}>
-            <View style={[styles.miniPill, { backgroundColor: colors.expenseRed }]}>
-              <Ionicons name="arrow-down" size={14} color="#fff" />
+            <View style={styles.mcTop}>
+              <View style={[styles.miniPill, { backgroundColor: colors.expenseRed }]}>
+                <Ionicons name="arrow-down" size={14} color="#fff" />
+              </View>
+              <View style={styles.mcTopRight}>
+                <Text style={styles.miniSub}>Este mes</Text>
+                <DragDots color={colors.muted} />
+              </View>
             </View>
             <Text style={styles.miniLabel}>Gastos</Text>
             <Text
@@ -180,7 +270,11 @@ export default function Home() {
             >
               -{money(summary?.month_expense || 0)}
             </Text>
-            <Text style={styles.miniSub}>Este mes</Text>
+            <MiniBars data={stats.expBars} color={colors.expenseRed} />
+            <View style={styles.mcAvg}>
+              <Text style={styles.mcAvgLabel}>Promedio diario</Text>
+              <Text style={styles.mcAvgVal}>{money(stats.avgExpense)}</Text>
+            </View>
           </View>
         </View>
         <View style={[styles.miniCard, styles.miniAccounts]}>
@@ -524,6 +618,11 @@ const useStyles = makeStyles((colors) => ({
   miniLabel: { fontSize: 12, color: colors.muted, marginTop: 4, fontWeight: "700" },
   miniAmount: { fontSize: 14, fontWeight: "800", marginTop: 2 },
   miniSub: { fontSize: 9, color: colors.muted, marginTop: 2, fontWeight: "600" },
+  mcTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  mcTopRight: { alignItems: "flex-end", gap: 3 },
+  mcAvg: { marginTop: 2 },
+  mcAvgLabel: { fontSize: 9, color: colors.muted, fontWeight: "600" },
+  mcAvgVal: { fontSize: 13, fontWeight: "800", color: colors.onSurface, marginTop: 1 },
   debtCard: {
     backgroundColor: colors.surfaceSecondary,
     borderRadius: radius.cardLg,
