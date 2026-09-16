@@ -5,12 +5,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { formatCurrency } from "@/src/format";
 import { ProgressBar } from "@/src/components/ProgressBar";
 import { IconTile } from "@/src/components/ui";
 
 export default function Budgets() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const qc = useQueryClient();
@@ -123,7 +125,7 @@ export default function Budgets() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
   card: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.cardLg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
@@ -137,4 +139,4 @@ const styles = StyleSheet.create({
   catChip: { alignItems: "center", padding: 8, borderRadius: radius.lg, backgroundColor: colors.surfaceSecondary, borderWidth: 1, borderColor: colors.border, minWidth: 76 },
   saveBtn: { marginTop: 20, backgroundColor: colors.brandPrimary, padding: 16, borderRadius: radius.pill, alignItems: "center" },
   saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
-});
+}));

@@ -5,7 +5,7 @@ import Ionicons from "@react-native-vector-icons/ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { formatCurrency, formatDate } from "@/src/format";
 import { IconTile, Chip } from "@/src/components/ui";
 import { LockToggle, useLock } from "@/src/lock";
@@ -28,6 +28,8 @@ const DATE_RANGES = [
 ];
 
 export default function Transactions() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guard } = useLock();
@@ -299,6 +301,8 @@ export default function Transactions() {
 function ActiveTag({
   label, color, icon, onRemove, testID,
 }: { label: string; color: string; icon: string; onRemove: () => void; testID?: string }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View testID={testID} style={[styles.activeTag, { borderColor: color + "80", backgroundColor: color + "1A" }]}>
       <Ionicons name={icon as any} size={13} color={color} />
@@ -313,6 +317,8 @@ function ActiveTag({
 function FilterPill({
   label, active, onPress, color, icon, testID,
 }: { label: string; active?: boolean; onPress: () => void; color?: string; icon?: string; testID?: string }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const bg = active ? (color || colors.brandPrimary) : colors.surfaceSecondary;
   const fg = active ? "#fff" : colors.onSurface;
   return (
@@ -327,7 +333,7 @@ function FilterPill({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
@@ -422,4 +428,4 @@ const styles = StyleSheet.create({
     flex: 2, padding: 14, borderRadius: radius.pill,
     backgroundColor: colors.brandPrimary, alignItems: "center",
   },
-});
+}));

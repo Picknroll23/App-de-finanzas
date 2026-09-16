@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { colors, radius } from "@/src/theme";
+import { useTheme, radius } from "@/src/theme";
 
 export function IconTile({
   icon,
@@ -41,6 +41,7 @@ export function Chip({
   onPress?: () => void;
   testID?: string;
 }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       testID={testID}

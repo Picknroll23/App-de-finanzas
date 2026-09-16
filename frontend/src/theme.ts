@@ -1,11 +1,19 @@
-// MoneyFlow design tokens. Supports light / dark / system mode.
+// MoneyFlow global theme system.
 //
-// The theme is resolved SYNCHRONOUSLY at module load so every `StyleSheet.create`
-// that reads `colors.xxx` at the top of a file gets the correct palette without
-// having to refactor screens. When the user changes the theme in Settings we
-// persist the preference and reload the JS bundle so all styles rebuild.
-import { useMemo } from "react";
-import { Appearance, Platform, StyleSheet, useColorScheme } from "react-native";
+// SINGLE SOURCE OF TRUTH: a React context holds the user's `mode`
+// ("light" | "dark" | "system") and derives the effective `scheme`.
+// Every component reads its colors from `useTheme()` (directly or through
+// `makeStyles`), so a theme change re-renders the whole tree instantly —
+// no JS bundle reload, so the navigation stack is preserved.
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { StyleSheet, useColorScheme } from "react-native";
 import { storage } from "@/src/utils/storage";
 
 export type ColorScheme = "light" | "dark";
@@ -106,112 +114,108 @@ const dark: typeof light = {
 export type ThemeColors = typeof light;
 export const themes: { light: ThemeColors; dark: ThemeColors } = { light, dark };
 
-// --- Synchronous initial-scheme resolution ---
+export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 };
+export const radius = { sm: 8, md: 16, lg: 24, cardLg: 28, pill: 999 };
+
 const THEME_KEY = "theme-mode";
 
-function readModeSync(): ThemeMode {
+/**
+ * Synchronous initial read so web avoids a light/dark flash on first paint.
+ * Native has no sync storage, so it starts at "system" and hydrates async.
+ */
+function readInitialMode(): ThemeMode {
   try {
-    if (Platform.OS === "web" && typeof (globalThis as any).localStorage !== "undefined") {
-      const v = (globalThis as any).localStorage.getItem(THEME_KEY);
+    const g: any = globalThis as any;
+    if (typeof g.localStorage !== "undefined") {
+      const v = g.localStorage.getItem(THEME_KEY);
       if (v === "light" || v === "dark" || v === "system") return v;
     }
-  } catch {}
+  } catch {
+    /* noop */
+  }
   return "system";
 }
 
-function resolveScheme(mode: ThemeMode): ColorScheme {
-  if (mode === "light" || mode === "dark") return mode;
-  return Appearance.getColorScheme() === "dark" ? "dark" : "light";
-}
+type ThemeContextValue = {
+  mode: ThemeMode; // user preference
+  scheme: ColorScheme; // effective / resolved theme
+  colors: ThemeColors;
+  setMode: (m: ThemeMode) => void;
+};
 
-const initialMode = readModeSync();
-const initialScheme = resolveScheme(initialMode);
+const ThemeContext = createContext<ThemeContextValue>({
+  mode: "system",
+  scheme: "light",
+  colors: light,
+  setMode: () => {},
+});
 
-// Mutable singleton: styles read these keys once at StyleSheet.create time so
-// we replace the object contents (not the reference) with the chosen palette.
-const _colors: ThemeColors = { ...(initialScheme === "dark" ? dark : light) };
-export const colors: ThemeColors = _colors;
-export const defaultScheme: ColorScheme = initialScheme;
-
-export function getCurrentScheme(): ColorScheme {
-  return initialScheme;
-}
-
-export function getCurrentMode(): ThemeMode {
-  return initialMode;
-}
-
-/**
- * Persist the user's theme choice and reload the JS bundle so every
- * `StyleSheet.create` re-runs with the new palette. No screen refactor needed.
- */
-export async function setThemeMode(mode: ThemeMode) {
-  try {
-    await storage.setItem(THEME_KEY, mode);
-    if (Platform.OS === "web") {
-      try {
-        if (typeof (globalThis as any).localStorage !== "undefined") {
-          (globalThis as any).localStorage.setItem(THEME_KEY, mode);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (globalThis as any).location?.reload?.();
-      } catch {}
-    } else {
-      Appearance.setColorScheme?.(mode === "system" ? null : mode);
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const expo = require("expo");
-        if (typeof expo.reloadAppAsync === "function") {
-          await expo.reloadAppAsync();
-        }
-      } catch {}
-    }
-  } catch (e) {
-    console.warn("setThemeMode error", e);
-  }
-}
-
-/**
- * Called from _layout on startup — if the async-persisted mode differs from
- * the mode we synchronously resolved at boot (e.g. cold start on native where
- * we could only read Appearance), reload once so styles rebuild correctly.
- */
-export async function reconcileThemeOnBoot() {
-  try {
-    const saved = await storage.getItem<string>(THEME_KEY, "");
-    if (!saved || saved === initialMode) return;
-    const desired = resolveScheme(saved as ThemeMode);
-    if (desired === initialScheme) return; // No visual change needed.
-    if (Platform.OS === "web") {
-      try {
-        if (typeof (globalThis as any).localStorage !== "undefined") {
-          (globalThis as any).localStorage.setItem(THEME_KEY, saved);
-        }
-        (globalThis as any).location?.reload?.();
-      } catch {}
-    } else {
-      Appearance.setColorScheme?.(saved === "system" ? null : (saved as ColorScheme));
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const expo = require("expo");
-      if (typeof expo.reloadAppAsync === "function") await expo.reloadAppAsync();
-    }
-  } catch {}
-}
-
-export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  // `useColorScheme` is reactive: it updates when the OS theme changes while
+  // the app is open, so "system" mode follows the device live.
   const system = useColorScheme();
-  const scheme: ColorScheme = system && themes[system] ? system : defaultScheme;
-  return { scheme, colors: themes[scheme] ?? themes.light };
+  const [mode, setModeState] = useState<ThemeMode>(readInitialMode);
+
+  // Hydrate the persisted preference once (covers native cold starts).
+  // On web the synchronous localStorage read above is already authoritative,
+  // so we must NOT override it with the async store (which can be stale and
+  // would incorrectly reset the user's choice back to "system").
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const g: any = globalThis as any;
+        if (typeof g.localStorage !== "undefined" && g.localStorage.getItem(THEME_KEY)) {
+          return; // web already resolved synchronously
+        }
+      } catch {
+        /* noop */
+      }
+      const saved = await storage.getItem<ThemeMode>(THEME_KEY, "system" as ThemeMode);
+      if (active && (saved === "light" || saved === "dark" || saved === "system")) {
+        setModeState((prev) => (prev === saved ? prev : saved));
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const setMode = useCallback((m: ThemeMode) => {
+    // Only persist + update global state. Never reload the bundle.
+    setModeState(m);
+    storage.setItem(THEME_KEY, m);
+    try {
+      const g: any = globalThis as any;
+      if (typeof g.localStorage !== "undefined") g.localStorage.setItem(THEME_KEY, m);
+    } catch {
+      /* noop */
+    }
+  }, []);
+
+  const scheme: ColorScheme = mode === "system" ? (system === "dark" ? "dark" : "light") : mode;
+
+  const value = useMemo<ThemeContextValue>(
+    () => ({ mode, scheme, colors: themes[scheme], setMode }),
+    [mode, scheme, setMode],
+  );
+
+  return React.createElement(ThemeContext.Provider, { value }, children);
 }
 
+export function useTheme(): ThemeContextValue {
+  return useContext(ThemeContext);
+}
+
+/**
+ * Build a StyleSheet from theme colors. The returned hook rebuilds the styles
+ * whenever the effective scheme changes, so every screen stays in sync.
+ */
 export function makeStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(
-  factory: (colors: ThemeColors) => T & StyleSheet.NamedStyles<any>,
+  factory: (colors: ThemeColors, scheme: ColorScheme) => T & StyleSheet.NamedStyles<any>,
 ): () => T {
   return function useStyles(): T {
-    const { colors } = useTheme();
-    return useMemo(() => StyleSheet.create(factory(colors)), [colors]);
+    const { colors, scheme } = useTheme();
+    return useMemo(() => StyleSheet.create(factory(colors, scheme)), [colors, scheme]);
   };
 }
-
-export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 };
-export const radius = { sm: 8, md: 16, lg: 24, cardLg: 28, pill: 999 };

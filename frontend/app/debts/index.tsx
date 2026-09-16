@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing, type ThemeColors, type ColorScheme } from "@/src/theme";
 import { formatCurrencyInt } from "@/src/format";
 import { ProgressRing } from "@/src/components/ProgressRing";
 import { Chip, IconTile } from "@/src/components/ui";
@@ -22,6 +22,8 @@ const TABS = [
 ];
 
 export default function Debts() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guard } = useLock();
@@ -175,7 +177,7 @@ export default function Debts() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   headerRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 20, fontWeight: "700", color: colors.onSurface, letterSpacing: -0.3 },
@@ -251,49 +253,49 @@ const styles = StyleSheet.create({
     minWidth: 34,
     textAlign: "right",
   },
-});
+}));
 
 
 /* ------------------------------------------------------------------ */
 /* Summary flip card — front = "Yo debo", back = "Me deben".           */
-/* Kept as a self-contained dark-premium hero card so it looks         */
-/* identical in both light & dark themes. Only this top card changed.  */
+/* Fully theme-aware: every color derives from the global theme so     */
+/* both faces follow light / dark instantly. Layout & flip unchanged.  */
 /* ------------------------------------------------------------------ */
 
 type FaceStat = { count: number; remaining: number; original: number; paid: number; pct: number };
 
-const TXT_PRIMARY = "#F5F1EC";
-const TXT_MUTED = "#9E9791";
-const PENDING_RED = "#EB6D5F";
-const RING_TRACK = "rgba(255,255,255,0.10)";
-
-const FACE_CFG = {
-  owe: {
-    accent: "#8F5BE8",
-    accentSoft: "rgba(143,92,232,0.16)",
-    border: "rgba(143,92,232,0.38)",
-    grad: ["#241C36", "#15121D"] as const,
-    glow: "rgba(143,92,232,0.20)",
-    headerIcon: "bar-chart" as const,
-    headerIconColor: "#FF7A63",
-    headerIconBg: "rgba(255,122,99,0.14)",
-    title: "Resumen de deudas",
-    subtitle: "Tus deudas y préstamos en un vistazo",
-    ringSub: "Pagado",
-    countLabel: "Total deudas",
-    doneLabel: "Pagado",
-    pillPrefix: "Has pagado el",
-    pillSuffix: "del total de tus deudas",
-  },
-  lent: {
-    accent: "#37C08D",
-    accentSoft: "rgba(55,192,141,0.14)",
-    border: "rgba(55,192,141,0.34)",
-    grad: ["#14261F", "#101815"] as const,
-    glow: "rgba(55,192,141,0.18)",
+function faceConfig(v: "owe" | "lent", colors: ThemeColors, scheme: ColorScheme) {
+  const dark = scheme === "dark";
+  if (v === "owe") {
+    const accent = colors.statsPurple;
+    return {
+      accent,
+      accentSoft: accent + (dark ? "24" : "14"),
+      border: accent + (dark ? "61" : "3D"),
+      grad: (dark ? ["#241C36", "#15121D"] : [accent + "12", colors.surfaceSecondary]) as [string, string],
+      glow: accent + (dark ? "22" : "12"),
+      headerIcon: "bar-chart" as const,
+      headerIconColor: colors.brandSecondary,
+      headerIconBg: colors.brandSecondary + "22",
+      title: "Resumen de deudas",
+      subtitle: "Tus deudas y préstamos en un vistazo",
+      ringSub: "Pagado",
+      countLabel: "Total deudas",
+      doneLabel: "Pagado",
+      pillPrefix: "Has pagado el",
+      pillSuffix: "del total de tus deudas",
+    };
+  }
+  const accent = colors.incomeGreen;
+  return {
+    accent,
+    accentSoft: accent + (dark ? "24" : "14"),
+    border: accent + (dark ? "5C" : "3D"),
+    grad: (dark ? ["#14261F", "#101815"] : [accent + "12", colors.surfaceSecondary]) as [string, string],
+    glow: accent + (dark ? "1F" : "12"),
     headerIcon: "cash-outline" as const,
-    headerIconColor: "#37C08D",
-    headerIconBg: "rgba(55,192,141,0.14)",
+    headerIconColor: accent,
+    headerIconBg: accent + "22",
     title: "Resumen de préstamos",
     subtitle: "Lo que te deben, en un vistazo",
     ringSub: "Recibido",
@@ -301,8 +303,8 @@ const FACE_CFG = {
     doneLabel: "Recibido",
     pillPrefix: "Has recibido el",
     pillSuffix: "del total que te deben",
-  },
-};
+  };
+}
 
 function MetricRow({
   icon,
@@ -317,6 +319,7 @@ function MetricRow({
   value: string;
   valueColor: string;
 }) {
+  const fs = useFlipStyles();
   return (
     <View style={fs.metricRow}>
       <View style={[fs.metricIcon, { backgroundColor: iconColor + "22" }]}>
@@ -333,7 +336,10 @@ function MetricRow({
 }
 
 function SummaryFace({ v, s }: { v: "owe" | "lent"; s: FaceStat }) {
-  const cfg = FACE_CFG[v];
+  const { colors, scheme } = useTheme();
+  const fs = useFlipStyles();
+  const cfg = faceConfig(v, colors, scheme);
+  const ringTrack = scheme === "dark" ? "rgba(255,255,255,0.10)" : colors.surfaceTertiary;
   const pctInt = Math.round(s.pct * 100);
   return (
     <LinearGradient
@@ -363,7 +369,7 @@ function SummaryFace({ v, s }: { v: "owe" | "lent"; s: FaceStat }) {
       {/* body */}
       <View style={fs.body}>
         <View style={fs.ringCol}>
-          <ProgressRing size={128} stroke={12} progress={s.pct} color={cfg.accent} trackColor={RING_TRACK}>
+          <ProgressRing size={128} stroke={12} progress={s.pct} color={cfg.accent} trackColor={ringTrack}>
             <Text style={fs.ringPct}>{pctInt}%</Text>
             <Text style={fs.ringSub}>{cfg.ringSub}</Text>
           </ProgressRing>
@@ -375,11 +381,11 @@ function SummaryFace({ v, s }: { v: "owe" | "lent"; s: FaceStat }) {
         <View style={fs.vDivider} />
 
         <View style={fs.rows}>
-          <MetricRow icon="people-outline" iconColor={TXT_MUTED} label={cfg.countLabel} value={String(s.count)} valueColor={TXT_PRIMARY} />
+          <MetricRow icon="people-outline" iconColor={colors.muted} label={cfg.countLabel} value={String(s.count)} valueColor={colors.onSurface} />
           <View style={fs.rowDivider} />
-          <MetricRow icon="document-text-outline" iconColor={PENDING_RED} label="Pendiente" value={formatCurrencyInt(s.remaining)} valueColor={PENDING_RED} />
+          <MetricRow icon="document-text-outline" iconColor={colors.expenseRed} label="Pendiente" value={formatCurrencyInt(s.remaining)} valueColor={colors.expenseRed} />
           <View style={fs.rowDivider} />
-          <MetricRow icon="server-outline" iconColor={TXT_MUTED} label="Total original" value={formatCurrencyInt(s.original)} valueColor={TXT_PRIMARY} />
+          <MetricRow icon="server-outline" iconColor={colors.muted} label="Total original" value={formatCurrencyInt(s.original)} valueColor={colors.onSurface} />
           <View style={fs.rowDivider} />
           <MetricRow icon="checkmark-circle" iconColor={cfg.accent} label={cfg.doneLabel} value={formatCurrencyInt(s.paid)} valueColor={cfg.accent} />
         </View>
@@ -393,13 +399,14 @@ function SummaryFace({ v, s }: { v: "owe" | "lent"; s: FaceStat }) {
         <Text style={fs.pillText} numberOfLines={1}>
           {cfg.pillPrefix} <Text style={[fs.pillBold, { color: cfg.accent }]}>{pctInt}%</Text> {cfg.pillSuffix}
         </Text>
-        <Ionicons name="chevron-forward" size={16} color={TXT_MUTED} />
+        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
       </View>
     </LinearGradient>
   );
 }
 
 function DebtSummaryFlip({ owe, lent }: { owe: FaceStat; lent: FaceStat }) {
+  const fs = useFlipStyles();
   const flip = useRef(new Animated.Value(0)).current;
   const flippedRef = useRef(false);
 
@@ -430,65 +437,74 @@ function DebtSummaryFlip({ owe, lent }: { owe: FaceStat; lent: FaceStat }) {
   );
 }
 
-const fs = StyleSheet.create({
-  face: { backfaceVisibility: "hidden" },
-  faceBack: { ...StyleSheet.absoluteFillObject },
-  card: {
-    borderRadius: radius.cardLg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
-  },
-  glow: {
-    position: "absolute",
-    top: -70,
-    right: -50,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-  },
-  headerRow: { flexDirection: "row", alignItems: "center" },
-  headerIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 17, fontWeight: "700", color: TXT_PRIMARY, letterSpacing: -0.3 },
-  subtitle: { fontSize: 12, color: TXT_MUTED, marginTop: 2 },
-  flipHint: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  body: { flexDirection: "row", alignItems: "center", marginTop: spacing.lg },
-  ringCol: { width: 138, alignItems: "center" },
-  ringPct: { fontSize: 30, fontWeight: "800", color: TXT_PRIMARY, letterSpacing: -0.5 },
-  ringSub: { fontSize: 12, color: TXT_MUTED, marginTop: -2 },
-  ringCaption: { fontSize: 13, fontWeight: "700", marginTop: 12, letterSpacing: -0.2 },
-  ringCaptionMuted: { color: TXT_MUTED, fontWeight: "400" },
-  vDivider: { width: 1, alignSelf: "stretch", backgroundColor: "rgba(255,255,255,0.10)", marginHorizontal: spacing.md, marginVertical: 4 },
-  rows: { flex: 1 },
-  metricRow: { flexDirection: "row", alignItems: "center", paddingVertical: 7 },
-  metricIcon: { width: 22, height: 22, borderRadius: 7, alignItems: "center", justifyContent: "center" },
-  metricLabel: { flex: 1, marginLeft: 10, fontSize: 13, color: TXT_MUTED },
-  metricValue: { fontSize: 16, fontWeight: "800", letterSpacing: -0.3 },
-  rowDivider: { height: 1, backgroundColor: "rgba(255,255,255,0.07)" },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: spacing.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  pillIcon: { width: 22, height: 22, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  pillText: { flex: 1, fontSize: 12.5, color: TXT_MUTED },
-  pillBold: { fontWeight: "800" },
+const useFlipStyles = makeStyles((colors, scheme) => {
+  const dark = scheme === "dark";
+  return {
+    face: { backfaceVisibility: "hidden" as const },
+    faceBack: { ...StyleSheet.absoluteFillObject },
+    card: {
+      borderRadius: radius.cardLg,
+      padding: spacing.lg,
+      borderWidth: 1,
+      overflow: "hidden" as const,
+      shadowColor: "#000",
+      shadowOpacity: dark ? 0.25 : 0.08,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 6,
+    },
+    glow: {
+      position: "absolute" as const,
+      top: -70,
+      right: -50,
+      width: 180,
+      height: 180,
+      borderRadius: 90,
+    },
+    headerRow: { flexDirection: "row" as const, alignItems: "center" as const },
+    headerIcon: { width: 38, height: 38, borderRadius: 12, alignItems: "center" as const, justifyContent: "center" as const },
+    title: { fontSize: 17, fontWeight: "700" as const, color: colors.onSurface, letterSpacing: -0.3 },
+    subtitle: { fontSize: 12, color: colors.muted, marginTop: 2 },
+    flipHint: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
+      borderWidth: 1,
+      backgroundColor: dark ? "rgba(255,255,255,0.04)" : colors.surfaceTertiary,
+    },
+    body: { flexDirection: "row" as const, alignItems: "center" as const, marginTop: spacing.lg },
+    ringCol: { width: 138, alignItems: "center" as const },
+    ringPct: { fontSize: 30, fontWeight: "800" as const, color: colors.onSurface, letterSpacing: -0.5 },
+    ringSub: { fontSize: 12, color: colors.muted, marginTop: -2 },
+    ringCaption: { fontSize: 13, fontWeight: "700" as const, marginTop: 12, letterSpacing: -0.2 },
+    ringCaptionMuted: { color: colors.muted, fontWeight: "400" as const },
+    vDivider: {
+      width: 1,
+      alignSelf: "stretch" as const,
+      backgroundColor: dark ? "rgba(255,255,255,0.10)" : colors.divider,
+      marginHorizontal: spacing.md,
+      marginVertical: 4,
+    },
+    rows: { flex: 1 },
+    metricRow: { flexDirection: "row" as const, alignItems: "center" as const, paddingVertical: 7 },
+    metricIcon: { width: 22, height: 22, borderRadius: 7, alignItems: "center" as const, justifyContent: "center" as const },
+    metricLabel: { flex: 1, marginLeft: 10, fontSize: 13, color: colors.muted },
+    metricValue: { fontSize: 16, fontWeight: "800" as const, letterSpacing: -0.3 },
+    rowDivider: { height: 1, backgroundColor: dark ? "rgba(255,255,255,0.07)" : colors.divider },
+    pill: {
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
+      gap: 10,
+      marginTop: spacing.lg,
+      paddingHorizontal: 12,
+      paddingVertical: 11,
+      borderRadius: radius.md,
+      borderWidth: 1,
+    },
+    pillIcon: { width: 22, height: 22, borderRadius: 11, alignItems: "center" as const, justifyContent: "center" as const },
+    pillText: { flex: 1, fontSize: 12.5, color: colors.muted },
+    pillBold: { fontWeight: "800" as const },
+  };
 });

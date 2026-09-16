@@ -5,12 +5,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { formatCurrencyInt, formatDateLong } from "@/src/format";
 import { ProgressRing } from "@/src/components/ProgressRing";
 import { IconTile } from "@/src/components/ui";
 
 export default function DebtDetail() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const params = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -147,7 +149,7 @@ export default function DebtDetail() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   headerRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 20, fontWeight: "700", color: colors.onSurface, letterSpacing: -0.3 },
@@ -191,4 +193,4 @@ const styles = StyleSheet.create({
   payText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   historyCard: { backgroundColor: colors.surfaceSecondary, borderRadius: radius.cardLg, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
   histRow: { flexDirection: "row", alignItems: "center", paddingVertical: 10 },
-});
+}));

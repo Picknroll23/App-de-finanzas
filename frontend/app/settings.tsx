@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing, setThemeMode, getCurrentMode, type ThemeMode } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing, type ThemeMode } from "@/src/theme";
 
 const CURRENCIES = ["USD", "EUR", "MXN", "COP", "ARS", "CLP"];
 const THEMES: { id: ThemeMode; label: string; icon: string }[] = [
@@ -18,6 +18,8 @@ export default function Settings() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const qc = useQueryClient();
+  const { colors, mode, setMode } = useTheme();
+  const styles = useStyles();
   const q = useQuery({ queryKey: ["user"], queryFn: api.getUser });
 
   const [name, setName] = useState("");
@@ -57,12 +59,12 @@ export default function Settings() {
       <Text style={styles.label}>Apariencia</Text>
       <View style={{ flexDirection: "row", gap: 8 }}>
         {THEMES.map((t) => {
-          const active = getCurrentMode() === t.id;
+          const active = mode === t.id;
           return (
             <Pressable
               key={t.id}
               testID={`theme-${t.id}`}
-              onPress={() => setThemeMode(t.id)}
+              onPress={() => setMode(t.id)}
               style={[
                 styles.themeBtn,
                 active && { backgroundColor: colors.brandPrimary, borderColor: colors.brandPrimary },
@@ -103,7 +105,7 @@ export default function Settings() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
   label: { color: colors.muted, fontSize: 12, fontWeight: "700", textTransform: "uppercase", marginTop: 16, marginBottom: 8, letterSpacing: 0.5 },
@@ -121,4 +123,4 @@ const styles = StyleSheet.create({
   },
   saveBtn: { marginTop: 28, backgroundColor: colors.brandPrimary, padding: 16, borderRadius: radius.pill, alignItems: "center" },
   saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
-});
+}));

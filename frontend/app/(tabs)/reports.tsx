@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PieChart, BarChart } from "react-native-gifted-charts";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { formatCurrency } from "@/src/format";
 import { Chip } from "@/src/components/ui";
 
@@ -18,6 +18,8 @@ const RANGES = [
 ];
 
 export default function Reports() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const [range, setRange] = useState("30d");
 
@@ -143,7 +145,7 @@ export default function Reports() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: { fontSize: 24, fontWeight: "800", color: colors.onSurface, paddingHorizontal: spacing.lg },
   chipRow: { paddingHorizontal: spacing.lg, gap: 8, marginTop: 12, height: 56, alignItems: "center" },
   card: {
@@ -158,4 +160,4 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: "800", color: colors.onSurface },
   legendRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, gap: 10 },
   legendDot: { width: 12, height: 12, borderRadius: 6 },
-});
+}));

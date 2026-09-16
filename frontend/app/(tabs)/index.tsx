@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing, type ThemeColors } from "@/src/theme";
 import { formatCurrency, formatCurrencyInt, formatDate, formatDateLong } from "@/src/format";
 import { IconTile } from "@/src/components/ui";
 import { LockToggle, useLock } from "@/src/lock";
@@ -20,7 +20,7 @@ function accountTypeLabel(t: string) {
   return m[t] || t;
 }
 
-function accountBars(accounts: any[], total: number) {
+function accountBars(accounts: any[], total: number, colors: ThemeColors) {
   const positives = accounts.filter((a) => a.current_balance > 0);
   const base = total > 0 ? total : positives.reduce((s, a) => s + a.current_balance, 0);
   const sorted = [...positives].sort((a, b) => b.current_balance - a.current_balance);
@@ -54,6 +54,8 @@ function accountBars(accounts: any[], total: number) {
 }
 
 export default function Home() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guard } = useLock();
@@ -188,7 +190,7 @@ export default function Home() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ gap: 6 }}
           >
-            {accountBars(accounts, summary?.total_balance || 0)}
+            {accountBars(accounts, summary?.total_balance || 0, colors)}
           </ScrollView>
         </View>
       </View>
@@ -368,7 +370,7 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -603,4 +605,4 @@ const styles = StyleSheet.create({
   },
   txName: { color: colors.onSurface, fontWeight: "700", fontSize: 14 },
   txSub: { color: colors.muted, fontSize: 12, marginTop: 2 },
-});
+}));

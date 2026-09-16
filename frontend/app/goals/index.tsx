@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { formatCurrency } from "@/src/format";
 import { ProgressRing } from "@/src/components/ProgressRing";
 import { IconTile } from "@/src/components/ui";
@@ -14,6 +14,8 @@ const COLORS = ["#29C4A9", "#4C83EA", "#FF654A", "#F5B83B", "#8F5BE8", "#2FA47C"
 const ICONS = ["flag-outline", "desktop-outline", "airplane-outline", "shield-checkmark-outline", "car-outline", "home-outline", "gift-outline", "school-outline"];
 
 export default function Goals() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const qc = useQueryClient();
@@ -102,7 +104,7 @@ export default function Goals() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
@@ -117,4 +119,4 @@ const styles = StyleSheet.create({
   iconOpt: { padding: 4, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSecondary },
   saveBtn: { marginTop: 20, backgroundColor: colors.brandPrimary, padding: 16, borderRadius: radius.pill, alignItems: "center" },
   saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
-});
+}));

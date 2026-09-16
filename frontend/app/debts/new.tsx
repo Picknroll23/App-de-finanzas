@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { IconTile } from "@/src/components/ui";
 
 const COLORS = ["#F5B83B", "#FF654A", "#D95345", "#4C83EA", "#8F5BE8", "#29C4A9", "#2FA47C"];
@@ -18,6 +18,8 @@ const FREQ = [
 ];
 
 export default function NewDebt() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const params = useLocalSearchParams<{ direction?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -145,7 +147,7 @@ export default function NewDebt() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   headerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: spacing.lg },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 20, fontWeight: "800", color: colors.onSurface },
@@ -157,4 +159,4 @@ const styles = StyleSheet.create({
   iconOpt: { padding: 4, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSecondary },
   saveBtn: { marginTop: 28, backgroundColor: colors.brandPrimary, padding: 16, borderRadius: radius.pill, alignItems: "center" },
   saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
-});
+}));

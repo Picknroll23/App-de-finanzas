@@ -3,25 +3,14 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { IconTile } from "@/src/components/ui";
 
 type Item = { icon: string; label: string; route: string; color: string };
 
-const MONEY: Item[] = [
-  { icon: "card-outline", label: "Cuentas", route: "/accounts", color: colors.accountsBlue },
-  { icon: "pricetags-outline", label: "Categorías", route: "/categories", color: colors.brandSecondary },
-  { icon: "pie-chart-outline", label: "Presupuestos", route: "/budgets", color: colors.expenseRed },
-  { icon: "flag-outline", label: "Metas de ahorro", route: "/goals", color: colors.savingsTurquoise },
-  { icon: "cash-outline", label: "Deudas y préstamos", route: "/debts", color: colors.loansYellow },
-];
-
-const APP: Item[] = [
-  { icon: "stats-chart-outline", label: "Informes", route: "/(tabs)/reports", color: colors.statsPurple },
-  { icon: "settings-outline", label: "Ajustes", route: "/settings", color: colors.muted },
-];
-
 function Row({ item }: { item: Item }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   return (
     <Pressable
@@ -37,7 +26,22 @@ function Row({ item }: { item: Item }) {
 }
 
 export default function More() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
+
+  const MONEY: Item[] = [
+    { icon: "card-outline", label: "Cuentas", route: "/accounts", color: colors.accountsBlue },
+    { icon: "pricetags-outline", label: "Categorías", route: "/categories", color: colors.brandSecondary },
+    { icon: "pie-chart-outline", label: "Presupuestos", route: "/budgets", color: colors.expenseRed },
+    { icon: "flag-outline", label: "Metas de ahorro", route: "/goals", color: colors.savingsTurquoise },
+    { icon: "cash-outline", label: "Deudas y préstamos", route: "/debts", color: colors.loansYellow },
+  ];
+  const APP: Item[] = [
+    { icon: "stats-chart-outline", label: "Informes", route: "/(tabs)/reports", color: colors.statsPurple },
+    { icon: "settings-outline", label: "Ajustes", route: "/settings", color: colors.muted },
+  ];
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.surface }}
@@ -67,7 +71,7 @@ export default function More() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: { fontSize: 24, fontWeight: "800", color: colors.onSurface, marginBottom: 8 },
   section: {
     fontSize: 12,
@@ -94,4 +98,4 @@ const styles = StyleSheet.create({
   },
   rowLabel: { flex: 1, fontSize: 15, fontWeight: "600", color: colors.onSurface },
   divider: { height: 1, backgroundColor: colors.divider, marginLeft: 62 },
-});
+}));

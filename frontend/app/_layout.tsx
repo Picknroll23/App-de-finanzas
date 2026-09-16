@@ -10,7 +10,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 import { ErrorBoundary } from "@/src/components/error-boundary";
 import { queryClient } from "@/src/query-client";
-import { colors, reconcileThemeOnBoot, getCurrentScheme } from "@/src/theme";
+import { ThemeProvider, useTheme } from "@/src/theme";
 import { LockProvider } from "@/src/lock";
 
 LogBox.ignoreAllLogs(true);
@@ -41,40 +41,43 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    reconcileThemeOnBoot();
-  }, []);
-
-  useEffect(() => {
     if (loaded) SplashScreen.hideAsync().catch(() => {});
   }, [loaded]);
 
   if (!loaded) return null;
 
-  const scheme = getCurrentScheme();
-
   return (
     <ErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.surface }}>
-        <SafeAreaProvider>
-          <QueryClientProvider client={queryClient}>
-            <BottomSheetModalProvider>
-              <LockProvider>
-                <StatusBar barStyle={scheme === "dark" ? "light-content" : "dark-content"} backgroundColor={colors.surface} />
-                <Stack
-                  screenOptions={{
-                    headerShown: false,
-                    contentStyle: { backgroundColor: colors.surface },
-                    animation: "slide_from_right",
-                    animationDuration: 200,
-                    animationTypeForReplace: "push",
-                    gestureEnabled: true,
-                  }}
-                />
-              </LockProvider>
-            </BottomSheetModalProvider>
-          </QueryClientProvider>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
+      <ThemeProvider>
+        <ThemedApp />
+      </ThemeProvider>
     </ErrorBoundary>
+  );
+}
+
+function ThemedApp() {
+  const { scheme, colors } = useTheme();
+  return (
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.surface }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <BottomSheetModalProvider>
+            <LockProvider>
+              <StatusBar barStyle={scheme === "dark" ? "light-content" : "dark-content"} backgroundColor={colors.surface} />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.surface },
+                  animation: "slide_from_right",
+                  animationDuration: 200,
+                  animationTypeForReplace: "push",
+                  gestureEnabled: true,
+                }}
+              />
+            </LockProvider>
+          </BottomSheetModalProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

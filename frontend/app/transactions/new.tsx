@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { IconTile } from "@/src/components/ui";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -16,6 +16,8 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default function NewTransaction() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const params = useLocalSearchParams<{ id?: string; type?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -206,7 +208,7 @@ export default function NewTransaction() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md, gap: 12,
@@ -247,4 +249,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
-});
+}));

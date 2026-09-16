@@ -5,11 +5,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { IconTile } from "@/src/components/ui";
 import { LockToggle, useLock } from "@/src/lock";
 
 export default function Categories() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guard } = useLock();
@@ -47,11 +49,11 @@ export default function Categories() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 22, fontWeight: "800", color: colors.onSurface },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
   gridItem: { width: "31%", backgroundColor: colors.surfaceSecondary, borderRadius: radius.lg, padding: 12, alignItems: "center", borderWidth: 1, borderColor: colors.border, marginBottom: 12 },
   name: { color: colors.onSurface, fontWeight: "700", fontSize: 12, marginTop: 8, textAlign: "center" },
   type: { color: colors.muted, fontSize: 10, marginTop: 2 },
-});
+}));

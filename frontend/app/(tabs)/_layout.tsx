@@ -4,9 +4,11 @@ import { Pressable, StyleSheet, View, Text, Modal, TouchableOpacity } from "reac
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radius } from "@/src/theme";
+import { useTheme, makeStyles, radius } from "@/src/theme";
 
 function FabButton({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   return (
     <View pointerEvents="box-none" style={[styles.fabWrap, { bottom: 20 + insets.bottom }]}>
@@ -25,6 +27,8 @@ function FabButton({ onPress }: { onPress: () => void }) {
 }
 
 function QuickMenu({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const router = useRouter();
   const items = [
     { icon: "trending-down-outline", label: "Gasto", color: colors.expenseRed, route: "/transactions/new?type=expense" },
@@ -65,6 +69,8 @@ function QuickMenu({ visible, onClose }: { visible: boolean; onClose: () => void
 }
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -126,7 +132,7 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   fabWrap: { position: "absolute", left: 0, right: 0, alignItems: "center" },
   fab: {
     width: 62,
@@ -156,4 +162,4 @@ const styles = StyleSheet.create({
   gridItem: { width: "31%", alignItems: "center", marginBottom: 20 },
   gridIcon: { width: 60, height: 60, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 8 },
   gridLabel: { fontSize: 12, fontWeight: "600", color: colors.onSurface, textAlign: "center" },
-});
+}));

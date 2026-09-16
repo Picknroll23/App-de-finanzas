@@ -10,7 +10,7 @@ import React, {
 import { Animated, Easing, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from "react-native";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import * as Haptics from "expo-haptics";
-import { colors, radius } from "@/src/theme";
+import { useTheme, makeStyles, radius } from "@/src/theme";
 import { storage } from "@/src/utils/storage";
 
 type LockContextValue = {
@@ -101,6 +101,7 @@ function FlashLayer({ flashes }: { flashes: Flash[] }) {
 }
 
 function FlashDot({ x, y }: { x: number; y: number }) {
+  const { colors } = useTheme();
   const scale = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const inner = useRef(new Animated.Value(0)).current;
@@ -162,6 +163,8 @@ function FlashDot({ x, y }: { x: number; y: number }) {
 }
 
 export function LockToggle({ testID, compact }: { testID?: string; compact?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const { locked, toggle } = useLock();
   return (
     <Pressable
@@ -188,7 +191,7 @@ export function LockToggle({ testID, compact }: { testID?: string; compact?: boo
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   toggle: {
     flexDirection: "row",
     alignItems: "center",
@@ -207,4 +210,4 @@ const styles = StyleSheet.create({
     borderColor: colors.brandPrimary,
   },
   toggleText: { fontSize: 12, fontWeight: "700" },
-});
+}));

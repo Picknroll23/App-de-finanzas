@@ -5,12 +5,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/src/api";
-import { colors, radius, spacing } from "@/src/theme";
+import { useTheme, makeStyles, radius, spacing } from "@/src/theme";
 import { formatCurrency } from "@/src/format";
 import { IconTile } from "@/src/components/ui";
 import { LockToggle, useLock } from "@/src/lock";
 
 export default function Accounts() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { guard } = useLock();
@@ -68,7 +70,7 @@ function typeLabel(t: string) {
   return m[t] || t;
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.lg, gap: 12 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceSecondary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.border },
   title: { flex: 1, fontSize: 22, fontWeight: "800", color: colors.onSurface },
@@ -88,4 +90,4 @@ const styles = StyleSheet.create({
   name: { fontWeight: "700", color: colors.onSurface, fontSize: 15 },
   sub: { color: colors.muted, fontSize: 12, marginTop: 2 },
   balance: { fontWeight: "800", color: colors.onSurface, fontSize: 16 },
-});
+}));
